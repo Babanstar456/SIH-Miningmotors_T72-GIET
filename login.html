@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suryadut - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF8C00;
+            --primary-dark: #E67E00;
+            --secondary: #00D4FF;
+            --accent: #00FF88;
+            --dark: #0A0E27;
+            --dark-light: #1A1F3A;
+            --light: #F0F4FF;
+            --text-primary: #0A0E27;
+            --text-secondary: #4A5578;
+            --border: #E8ECFF;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #F0F4FF 0%, #FFFFFF 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ANIMATIONS */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInFromLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+
+        @keyframes glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 5px rgba(255, 140, 0, 0.3), inset 0 0 5px rgba(255, 140, 0, 0.1);
+            }
+
+            50% {
+                box-shadow: 0 0 20px rgba(255, 140, 0, 0.5), inset 0 0 10px rgba(255, 140, 0, 0.2);
+            }
+        }
+
+        /* HEADER */
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid var(--primary);
+            animation: slideInFromLeft 0.6s ease-out;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            gap: 40px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            animation: slideUp 0.6s ease-out;
+            transition: transform 0.3s;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .login-modes {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            background: white;
+            color: var(--text-primary);
+            padding: 12px 28px;
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .mode-btn:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .mode-btn:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .mode-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 140, 0, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .mode-btn:hover::before {
+            left: 100%;
+        }
+
+        .mode-btn.active {
+            border-color: var(--primary);
+            color: white;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            box-shadow: 0 8px 25px rgba(255, 140, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .mode-btn:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .back-btn {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--secondary);
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideUp 0.6s ease-out 0.3s both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .back-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--secondary);
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: -1;
+        }
+
+        .back-btn:hover::before {
+            transform: translateX(0);
+        }
+
+        .back-btn:hover {
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* MAIN CONTAINER */
+        .login-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            perspective: 1000px;
+        }
+
+        .login-box {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+            animation: slideUp 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .login-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--primary) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .login-box.hidden {
+            display: none;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        .login-icon {
+            font-size: 56px;
+            margin-bottom: 20px;
+            display: inline-block;
+            animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
+            transition: transform 0.3s;
+        }
+
+        .login-box:not(.hidden) .login-icon {
+            animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
+        }
+
+        .login-title {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--dark);
+            margin-bottom: 10px;
+            animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.5s both;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        .form-group:nth-child(1) {
+            animation-delay: 0.4s;
+        }
+
+        .form-group:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .form-group:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            background: rgba(245, 247, 255, 0.5);
+            position: relative;
+        }
+
+        input::placeholder {
+            color: rgba(74, 85, 120, 0.5);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(255, 140, 0, 0.1), inset 0 0 0 1px rgba(255, 140, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        input:hover:not(:focus) {
+            border-color: rgba(255, 140, 0, 0.3);
+            background: rgba(245, 247, 255, 0.8);
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+            animation: fadeIn 0.8s ease-out 0.7s both;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .remember-me:hover {
+            color: var(--primary);
+        }
+
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--primary);
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .remember-me input[type="checkbox"]:hover {
+            transform: scale(1.1);
+        }
+
+        .forgot-password {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .forgot-password::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .forgot-password:hover::after {
+            width: 100%;
+        }
+
+        .forgot-password:hover {
+            color: var(--primary-dark);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 25px rgba(255, 140, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.8s ease-out 0.8s both;
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(255, 140, 0, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(-2px);
+        }
+
+        .login-btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            animation: fadeIn 0.8s ease-out 0.9s both;
+        }
+
+        .signup-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .signup-link a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .signup-link a:hover {
+            color: var(--primary-dark);
+        }
+
+        .signup-link a:hover::after {
+            width: 100%;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 20px;
+            }
+
+            .navbar {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .login-modes {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            .login-box {
+                padding: 30px;
+                margin: 0 15px;
+            }
+
+            .login-title {
+                font-size: 26px;
+            }
+
+            .mode-btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+
+            .back-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- HEADER -->
+    <header>
+        <div class="navbar">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">☀️</div>
+                <span>SURYADUT</span>
+            </a>
+            <div class="login-modes">
+                <button class="mode-btn active" onclick="switchMode('admin')">Admin Login</button>
+                <button class="mode-btn" onclick="switchMode('vendor')">Vendors Login</button>
+            </div>
+            <a href="index.html" class="back-btn">← Back</a>
+        </div>
+    </header>
+
+    <!-- LOGIN CONTAINER -->
+    <div class="login-container">
+        <!-- ADMIN LOGIN -->
+        <div class="login-box" id="adminForm">
+            <div class="login-header">
+                <div class="login-icon">👨‍💼</div>
+                <h1 class="login-title">Admin Login</h1>
+                <p class="login-subtitle">Manage all operations and systems</p>
+            </div>
+            <form onsubmit="handleLogin(event, 'admin')">
+                <div class="form-group">
+                    <label for="adminEmail">Email Address</label>
+                    <input type="email" id="adminEmail" placeholder="admin@suryadut.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" placeholder="Enter your password" required>
+                </div>
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+                <button type="submit" class="login-btn">Sign In as Admin</button>
+                <p class="signup-link">Don't have an account? <a href="#">Contact Support</a></p>
+            </form>
+        </div>
+
+        <!-- VENDOR LOGIN -->
+        <div class="login-box hidden" id="vendorForm">
+            <div class="login-header">
+                <div class="login-icon">🏭</div>
+                <h1 class="login-title">Vendor Login</h1>
+                <p class="login-subtitle">Access your bidding and projects</p>
+            </div>
+            <form onsubmit="handleLogin(event, 'vendor')">
+                <div class="form-group">
+                    <label for="vendorEmail">Email Address</label>
+                    <input type="email" id="vendorEmail" placeholder="your@company.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="vendorPassword">Password</label>
+                    <input type="password" id="vendorPassword" placeholder="Enter your password" required>
+                </div>
+                <div class="form-options">
+                    <label class="remember-me">
+                        <input type="checkbox">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+                <button type="submit" class="login-btn">Sign In as Vendor</button>
+                <p class="signup-link">New vendor? <a href="#">Register here</a></p>
+            </form>
+        </div>
+    </div>
+
+  <Script>
+    function switchMode(mode) {
+        const adminForm = document.getElementById('adminForm');
+        const vendorForm = document.getElementById('vendorForm');
+        const modeButtons = document.querySelectorAll('.mode-btn');
+
+        modeButtons.forEach(btn => btn.classList.remove('active'));
+
+        if (mode === 'admin') {
+            adminForm.classList.remove('hidden');
+            vendorForm.classList.add('hidden');
+            modeButtons[0].classList.add('active');
+        } else if (mode === 'vendor') {
+            adminForm.classList.add('hidden');
+            vendorForm.classList.remove('hidden');
+            modeButtons[1].classList.add('active');
+        }
+    }
+
+    function handleLogin(event, userType) {
+        event.preventDefault();
+
+        const emailField = userType === 'admin' ? 'adminEmail' : 'vendorEmail';
+        const passwordField = userType === 'admin' ? 'adminPassword' : 'vendorPassword';
+
+        const email = document.getElementById(emailField).value.trim();
+        const password = document.getElementById(passwordField).value;
+
+        // === DEMO CREDENTIALS (remove or replace with real backend check later) ===
+        if (userType === 'admin' && email === 'admin@suryadut.com' && password === 'admin123') {
+            // Save login state (optional)
+            localStorage.setItem('userType', 'admin');
+            localStorage.setItem('userEmail', email);
+            // Redirect to Admin Dashboard
+            window.location.href = 'admin dasboard.html';
+            return;
+        }
+
+        if (userType === 'vendor' && email === 'vendor@demo.com' && password === 'vendor123') {
+            localStorage.setItem('userType', 'vendor');
+            localStorage.setItem('userEmail', email);
+            window.location.href = 'vendor bidding.html';
+            return;
+        }
+
+        // If credentials are wrong
+        alert('Invalid email or password!\n\nDemo credentials:\nAdmin: admin@suryadut.com / admin123\nVendor: vendor@demo.com / vendor123');
+    }
+
+    // Optional: Shortcut keys
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === '1') switchMode('admin');
+        if (e.ctrlKey && e.key === '2') switchMode('vendor');
+    });
+</script>
+</body>
+
+</html>

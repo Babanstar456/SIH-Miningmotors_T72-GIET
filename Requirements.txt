@@ -1,0 +1,5 @@
+Python Modules for Machine Learning 
+  Pandas latest version of Python(for processing large datas through Opencv ) 
+  numpy  latest version of Python(for advanced statistical and mathematical calculations )
+  scipy latest version of Python (for advanced regression based stats )
+  

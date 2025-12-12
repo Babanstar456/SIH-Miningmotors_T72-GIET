@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - SURYADUT</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@700;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        :root {
+            --p: #FF8C00;
+            --pd: #E67E00;
+            --a: #00FF88;
+            --s: #00D4FF;
+            --r: #ff4444;
+            --w: #ffc107;
+            --bg: linear-gradient(135deg, #fffbee 0%, #f8faff 100%);
+            --card: rgba(255, 255, 255, 0.95);
+            --radius: 28px;
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: #1a1a1a;
+            min-height: 100vh;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 20px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid rgba(255, 140, 0, 0.1);
+        }
+
+        .navbar {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Poppins', sans-serif;
+            font-size: 36px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--p), var(--s));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--p), var(--s));
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(255, 140, 0, 0.3);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-15px)
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 60px auto;
+            padding: 0 40px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 52px;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--p), var(--a));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 140, 0, 0.15);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid rgba(255, 140, 0, 0.2);
+            border-radius: 16px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--p);
+            box-shadow: 0 0 0 5px rgba(255, 140, 0, 0.2);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--p), var(--pd));
+            color: white;
+            padding: 16px 40px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255, 140, 0, 0.5);
+        }
+
+        .tender {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            border-left: 6px solid var(--p);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .tender.awarded {
+            border-left-color: var(--a);
+            background: #f8fff9;
+        }
+
+        .bid {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 16px;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .pending {
+            background: #fff4e0;
+            color: #FF8C00;
+        }
+
+        .accepted {
+            background: #d4edda;
+            color: #0b5e2f;
+        }
+
+        .rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .revise {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        .accept {
+            background: var(--a);
+            color: white;
+        }
+
+        .reject {
+            background: var(--r);
+            color: white;
+        }
+
+        .revise-btn {
+            background: var(--w);
+            color: black;
+        }
+
+        .logout {
+            background: linear-gradient(135deg, #ff4d4d, #ff1a1a);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="navbar">
+            <a href="#" class="logo">
+                <div class="logo-icon">Sun</div>SURYADUT
+            </a>
+            <div><strong>Admin Panel</strong></div>
+            <a href="#" class="logout"
+                onclick="if(confirm('Logout?')){localStorage.clear();location.reload()}">Logout</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>Bidding Management</h1>
+        <p style="text-align:center; color:#555; margin-bottom:40px;">Create tenders • Review bids • Award fairly</p>
+
+        <div class="card">
+            <h2 style="font-size:28px; margin-bottom:25px; color:var(--p);">Create New Tender</h2>
+            <div class="form-grid">
+                <input type="text" id="title" placeholder="Tender Title" required>
+                <input type="text" id="value" placeholder="Estimated Value">
+                <input type="number" id="minBid" placeholder="Minimum Bid (₹)" min="0">
+                <input type="number" id="deposit" placeholder="Security Deposit (₹)" min="0">
+                <input type="date" id="closeDate" required>
+                <textarea id="desc" rows="4" placeholder="Full description..." required></textarea>
+                <div></div>
+                <button class="btn" onclick="createTender()">Publish Tender</button>
+            </div>
+        </div>
+
+        <div id="tendersList"></div>
+    </div>
+
+    <script>
+        const KEY = 'suryadut_tenders_final_v4';
+        function getT() { return JSON.parse(localStorage.getItem(KEY) || '[]'); }
+        function saveT(t) { localStorage.setItem(KEY, JSON.stringify(t)); }
+
+        function createTender() {
+            const t = {
+                id: 'SD-' + Date.now(),
+                title: document.getElementById('title').value.trim(),
+                value: document.getElementById('value').value.trim() || "Not specified",
+                minBid: parseInt(document.getElementById('minBid').value) || 0,
+                deposit: parseInt(document.getElementById('deposit').value) || 0,
+                closeDate: document.getElementById('closeDate').value,
+                desc: document.getElementById('desc').value.trim(),
+                status: 'open',
+                bids: [],
+                createdAt: new Date().toLocaleString('en-IN')
+            };
+            if (!t.title || !t.closeDate || !t.desc) return alert("Fill required fields!");
+            const tenders = getT();
+            tenders.push(t);
+            saveT(tenders);
+            alert("Tender published!");
+            document.querySelectorAll('input, textarea').forEach(i => i.value = '');
+            loadTenders();
+        }
+
+        function handleBid(tenderId, bidIdx, action) {
+            const tenders = getT();
+            const tender = tenders.find(x => x.id === tenderId);
+            const bid = tender.bids[bidIdx];
+
+            if (action === 'accept') {
+                if (!confirm(`Award to ${bid.company}?`)) return;
+                tender.status = 'awarded';
+                tender.awardedTo = bid;
+            } else if (action === 'reject') {
+                if (!confirm("Reject bid?")) return;
+                bid.status = 'rejected';
+            } else if (action === 'revise') {
+                const reason = prompt("Reason for revision (vendor will see this):");
+                if (!reason) return;
+                bid.status = 'revise';
+                bid.reviseReason = reason;
+                bid.revisedAt = new Date().toLocaleString('en-IN');
+            }
+            saveT(tenders);
+            loadTenders();
+        }
+
+        function loadTenders() {
+            const tenders = getT();
+            const el = document.getElementById('tendersList');
+            el.innerHTML = tenders.map(t => `
+                <div class="tender ${t.status === 'awarded' ? 'awarded' : ''}">
+                    <h3 style="color:var(--p);">${t.title} <small>(#${t.id})</small></h3>
+                    <p><strong>Value:</strong> ${t.value} | <strong>Min Bid:</strong> ₹${t.minBid.toLocaleString()} | <strong>Deposit:</strong> ₹${t.deposit.toLocaleString()}</p>
+                    <p><strong>Closes:</strong> ${t.closeDate}</p>
+                    <p style="margin:15px 0;">${t.desc}</p>
+                    ${t.status === 'awarded' ? `<div style="background:#d4edda;padding:20px;border-radius:16px;color:green;font-weight:bold;">Awarded to: ${t.awardedTo.company} @ ₹${t.awardedTo.amount.toLocaleString()}</div>` : ''}
+                    <h4 style="margin:25px 0 15px;">${t.bids.length} Bids</h4>
+                    ${t.bids.map((b, i) => `
+                        <div class="bid">
+                            <div class="status ${b.status || 'pending'}">${(b.status || 'pending').toUpperCase()}</div>
+                            <strong>${b.company} (${b.name})</strong><br>
+                            Bid: ₹${b.amount.toLocaleString()} • ${b.days} days<br>
+                            ${b.phone} | ${b.email} | GST: ${b.gst}<br>
+                            <small>${b.submittedAt}</small>
+                            ${b.reviseReason ? `<br><strong style="color:#d39e00;">Revision:</strong> ${b.reviseReason}` : ''}
+                            ${t.status === 'open' && (!b.status || b.status !== 'accepted') ? `
+                                <div style="margin-top:15px;">
+                                    <button class="action-btn accept" onclick="handleBid('${t.id}',${i},'accept')">Accept</button>
+                                    <button class="action-btn reject" onclick="handleBid('${t.id}',${i},'reject')">Reject</button>
+                                    <button class="action-btn revise-btn" onclick="handleBid('${t.id}',${i},'revise')">Request Revision</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('') || '<p style="text-align:center;padding:100px;color:#888;">No tenders yet.</p>';
+        }
+
+        loadTenders();
+        window.addEventListener('storage', e => { if (e.key === KEY) loadTenders(); });
+    </script>
+</body>
+
+</html>

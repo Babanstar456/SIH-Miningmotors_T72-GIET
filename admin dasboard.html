@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - SURYADUT</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #FF8C00;
+            --primary-dark: #E67E00;
+            --secondary: #00D4FF;
+            --accent: #00FF88;
+            --text: #1a1a1a;
+            --text-light: #555;
+            --bg: #f8faff;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --border: rgba(255, 140, 0, 0.15);
+            --shadow-sm: 0 8px 25px rgba(0, 0, 0, 0.06);
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 30px 80px rgba(255, 140, 0, 0.18);
+            --radius: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #fffbee 0%, #f8faff 50%, #e6f7ff 100%);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.7;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 20px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid rgba(255, 140, 0, 0.1);
+        }
+
+        .navbar {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Poppins', sans-serif;
+            font-size: 36px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            letter-spacing: -1px;
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            box-shadow: 0 10px 30px rgba(255, 140, 0, 0.3);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .logout {
+            background: linear-gradient(135deg, #ff4d4d, #ff1a1a);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(255, 77, 77, 0.3);
+        }
+
+        .logout:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(255, 77, 77, 0.4);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1500px;
+            margin: 60px auto;
+            padding: 0 40px;
+        }
+
+        .welcome {
+            text-align: center;
+            margin-bottom: 70px;
+        }
+
+        .welcome h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 54px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), #00FF88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+            letter-spacing: -1.5px;
+        }
+
+        .welcome p {
+            font-size: 20px;
+            color: var(--text-light);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Cards */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+            gap: 40px;
+            margin-bottom: 100px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius);
+            padding: 50px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .card:hover {
+            transform: translateY(-20px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-icon {
+            font-size: 70px;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card h2 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .card p {
+            font-size: 16px;
+            color: var(--text-light);
+            margin-bottom: 32px;
+            line-height: 1.8;
+        }
+
+        .card-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 16px 36px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 30px rgba(255, 140, 0, 0.35);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-btn:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 50px rgba(255, 140, 0, 0.5);
+        }
+
+        /* Sections */
+        .section-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: 44px;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 70px;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 35px;
+        }
+
+        .feature {
+            background: white;
+            padding: 40px 30px;
+            border-radius: var(--radius);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.4s ease;
+            border: 1px solid rgba(255, 140, 0, 0.1);
+        }
+
+        .feature:hover {
+            transform: translateY(-12px);
+            box-shadow: var(--shadow);
+        }
+
+        .feature i {
+            font-size: 60px;
+            margin-bottom: 24px;
+            color: var(--primary);
+        }
+
+        .feature h3 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+
+        /* Counter Animation */
+        .counter {
+            font-size: 48px;
+            font-weight: 900;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Animations */
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .fade-up {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s ease;
+        }
+
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .welcome h1 {
+                font-size: 42px;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .card {
+                padding: 40px 30px;
+            }
+
+            .section-title {
+                font-size: 36px;
+            }
+
+            header {
+                padding: 15px 20px;
+            }
+
+            .logo {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="navbar">
+            <a href="#" class="logo">
+                <div class="logo-icon">☀️</div>
+                SURYADUT
+            </a>
+            <a href="login.html" class="logout" onclick="localStorage.clear()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="welcome fade-up">
+            <h1>Welcome Back, Admin!</h1>
+            <p>Monitor operations, manage bids, and drive manufacturing excellence with real-time insights</p>
+        </div>
+
+        <!-- Main Feature Cards -->
+        <div class="cards-grid">
+            <div class="card fade-up">
+                <div class="card-icon"><i class="fas fa-gavel"></i></div>
+                <h2>Bidding Management</h2>
+                <p>Full control over tenders — create, monitor, evaluate bids, and award contracts with complete
+                    transparency and audit trail.</p>
+                <button class="card-btn" onclick="window.location.href='bidding.html'">
+                    Open Bidding Panel <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="card fade-up">
+                <div class="card-icon"><i class="fas fa-cogs"></i></div>
+                <h2>Machine Status Monitoring</h2>
+                <p>Real-time factory floor visibility — track machine health, OEE, downtime alerts, and predictive
+                    maintenance schedules.</p>
+                <button class="card-btn" onclick="window.location.href='live monitoring.html'">
+                    View All Machines <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Why Choose Us -->
+        <h2 class="section-title fade-up">Why SURYADUT Stands Above the Rest</h2>
+        <div class="features">
+            <div class="feature fade-up">
+                <i class="fas fa-trophy"></i>
+                <h3>Industry Pioneer</h3>
+                <p><span class="counter" data-target="32">0</span>+ Years of Manufacturing Excellence</p>
+            </div>
+            <div class="feature fade-up">
+                <i class="fas fa-award"></i>
+                <h3>German Precision</h3>
+                <p>ISO 9001:2015 Certified with 100% Quality Control at Every Stage</p>
+            </div>
+            <div class="feature fade-up">
+                <i class="fas fa-clock"></i>
+                <h3>On-Time Guarantee</h3>
+                <p><span class="counter" data-target="99">0</span>% Projects Delivered On or Before Deadline</p>
+            </div>
+            <div class="feature fade-up">
+                <i class="fas fa-globe"></i>
+                <h3>Global Trust</h3>
+                <p>Serving <span class="counter" data-target="500">0</span>+ Clients Across 18 Countries</p>
+            </div>
+        </div>
+
+        <!-- How We Solve -->
+        <h2 class="section-title fade-up" style="margin-top: 120px;">How We Solve Modern Manufacturing Challenges</h2>
+        <div class="features">
+            <div class="feature fade-up">
+                <i class="fas fa-eye"></i>
+                <h3>Complete Transparency</h3>
+                <p>End-to-end visibility from tender to delivery — no more black boxes</p>
+            </div>
+            <div class="feature fade-up">
+                <i class="fas fa-robot"></i>
+                <h3>AI-Powered Predictive Maintenance</h3>
+                <p>Reduce unplanned downtime by up to 70% with machine learning alerts</p>
+            </div>
+            <div class="feature fade-up">
+                <i class="fas fa-gavel"></i>
+                <h3>Fair & Automated Bidding</h3>
+                <p>Eliminate bias and speed up procurement by 10x with smart automation</p>
+            </div>
+            <div class="feature fade-up">
+                <i class="fas fa-headset"></i>
+                <h3>Dedicated 24/7 Support</h3>
+                <p>Your success team is always online — because your production never sleeps</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+      
+
+        // Scroll animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+        // Animated counters
+        const counters = document.querySelectorAll('.counter');
+        const speed = 200;
+
+        counters.forEach(counter => {
+            const updateCount = () => {
+                const target = +counter.getAttribute('data-target');
+                const count = +counter.innerText;
+                const inc = target / speed;
+
+                if (count < target) {
+                    counter.innerText = Math.ceil(count + inc);
+                    setTimeout(updateCount, 30);
+                } else {
+                    counter.innerText = target;
+                    if (target === 99) counter.innerText = '99.7';
+                }
+            };
+            observer.observe(counter);
+            counter.addEventListener('intersection', updateCount, { once: true });
+        });
+    </script>
+</body>
+
+</html>

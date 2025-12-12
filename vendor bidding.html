@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Portal - SURYADUT</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@700;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <style>
+        :root {
+            --p: #FF8C00;
+            --a: #00FF88;
+            --r: #ff4444;
+            --w: #ffc107;
+            --bg: linear-gradient(135deg, #fffbee 0%, #f8faff 100%);
+            --card: rgba(255, 255, 255, 0.95);
+            --radius: 28px;
+            --shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: #1a1a1a;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 20px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+        }
+
+        .navbar {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Poppins', sans-serif;
+            font-size: 36px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--p), #00D4FF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--p), #00D4FF);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(255, 140, 0, 0.3);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-15px)
+            }
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 60px auto;
+            padding: 0 40px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 48px;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--p), var(--a));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tender {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 35px;
+            margin: 30px 0;
+            box-shadow: var(--shadow);
+            border: 2px solid transparent;
+        }
+
+        .tender.won {
+            border-color: var(--a);
+            background: #f8fff9;
+            text-align: center;
+        }
+
+        .tender.closed {
+            border-color: var(--r);
+            background: #fff5f5;
+            text-align: center;
+        }
+
+        .tender.revise {
+            border-color: var(--w);
+            background: #fffbeb;
+        }
+
+        .bid-btn {
+            background: linear-gradient(135deg, var(--p), #E67E00);
+            color: white;
+            padding: 18px;
+            border: none;
+            border-radius: 50px;
+            width: 100%;
+            font-weight: 700;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .bid-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(255, 140, 0, 0.4);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 32px;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid rgba(255, 140, 0, 0.2);
+            border-radius: 14px;
+            font-size: 16px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--p);
+            box-shadow: 0 0 0 4px rgba(255, 140, 0, 0.15);
+        }
+
+        .min-bid-notice {
+            color: #d39e00;
+            font-size: 14px;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="navbar">
+            <a href="#" class="logo">
+                <div class="logo-icon">Sun</div>SURYADUT
+            </a>
+            <div id="vendorInfo" style="font-weight:600; color:var(--p);">Vendor Portal</div>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>Active Tenders</h1>
+        <p style="text-align:center; color:#555; margin-bottom:50px;">Submit your best bid • Track status live</p>
+        <div id="tenders"></div>
+    </div>
+
+    <!-- Modal -->
+    <div id="bidModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">×</span>
+            <h2 id="modalTitle" style="margin-bottom:20px; color:var(--p);">Submit Your Bid</h2>
+            <form id="bidForm">
+                <div class="form-group"><label>Your Name</label><input type="text" id="vName" required></div>
+                <div class="form-group"><label>Company Name</label><input type="text" id="vCompany" required></div>
+                <div class="form-group"><label>Phone</label><input type="tel" id="vPhone" required></div>
+                <div class="form-group"><label>Email</label><input type="email" id="vEmail" required></div>
+                <div class="form-group"><label>GST Number</label><input type="text" id="vGst" required></div>
+                <div class="form-group">
+                    <label>Bid Amount (₹)</label>
+                    <input type="number" id="vAmount" required>
+                    <div class="min-bid-notice" id="minBidNotice"></div>
+                </div>
+                <div class="form-group"><label>Delivery in (Days)</label><input type="number" id="vDays" required
+                        min="1"></div>
+                <button type="submit" class="bid-btn">Submit Bid</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const KEY = 'suryadut_tenders_final_v4';
+        let currentTenderId = null;
+
+        let vendorName = localStorage.getItem('vendorName') || (prompt("Enter Your Company Name:") || "Guest Vendor");
+        localStorage.setItem('vendorName', vendorName);
+        document.getElementById('vendorInfo').innerHTML = `<strong>Vendor:</strong> ${vendorName}`;
+
+        function openModal(tenderId) {
+            const tenders = JSON.parse(localStorage.getItem(KEY) || '[]');
+            const tender = tenders.find(t => t.id === tenderId);
+            if (!tender) return alert("processing");
+
+            currentTenderId = tenderId;
+            document.getElementById('modalTitle').textContent = `Bid for: ${tender.title}`;
+            document.getElementById('minBidNotice').innerHTML = `<strong>Minimum acceptable bid: ₹${tender.minBid.toLocaleString()}</strong>`;
+            document.getElementById('vCompany').value = vendorName;
+            document.getElementById('bidModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('bidModal').classList.remove('show');
+            document.getElementById('bidForm').reset();
+            document.getElementById('vCompany').value = vendorName;
+        }
+
+        document.getElementById('bidForm').onsubmit = function (e) {
+            e.preventDefault();
+            const tenders = JSON.parse(localStorage.getItem(KEY) || '[]');
+            const tender = tenders.find(t => t.id === currentTenderId);
+            const amount = parseInt(document.getElementById('vAmount').value);
+
+            if (amount < tender.minBid) {
+                alert(`Bid must be at least ₹${tender.minBid.toLocaleString()}!`);
+                return;
+            }
+
+            const bid = {
+                name: document.getElementById('vName').value.trim(),
+                company: document.getElementById('vCompany').value.trim(),
+                phone: document.getElementById('vPhone').value.trim(),
+                email: document.getElementById('vEmail').value.trim(),
+                gst: document.getElementById('vGst').value.trim(),
+                amount,
+                days: parseInt(document.getElementById('vDays').value),
+                submittedAt: new Date().toLocaleString('en-IN'),
+                status: 'pending'
+            };
+
+            tender.bids = tender.bids.filter(b => b.company !== bid.company);
+            tender.bids.push(bid);
+            localStorage.setItem(KEY, JSON.stringify(tenders));
+
+            alert("Bid submitted successfully!");
+            closeModal();
+            loadTenders();
+        };
+
+        function loadTenders() {
+            const tenders = JSON.parse(localStorage.getItem(KEY) || '[]');
+            const container = document.getElementById('tenders');
+            let html = '';
+
+            tenders.forEach(tender => {
+                const myBid = tender.bids.find(b => b.company === vendorName);
+                const status = myBid?.status;
+
+                if (tender.status === 'awarded' && tender.awardedTo?.company === vendorName) {
+                    html += `<div class="tender won"><h2>You WON!</h2><p><strong>${tender.title}</strong><br>Awarded at ₹${tender.awardedTo.amount.toLocaleString()}</p></div>`;
+                } else if (tender.status === 'awarded') {
+                    html += `<div class="tender closed"><h3>Tender Closed</h3><p>${tender.title}<br>Awarded to another vendor</p></div>`;
+                } else if (status === 'revise') {
+                    html += `
+                        <div class="tender revise">
+                            <h3>Revision Requested</h3>
+                            <p><strong>${tender.title}</strong></p>
+                            <div style="background:#fff3cd;padding:15px;border-radius:12px;margin:15px 0;">
+                                <strong>Admin's Message:</strong> ${myBid.reviseReason}
+                            </div>
+                            <button class="bid-btn" data-tender-id="${tender.id}">Resubmit Your Bid</button>
+                        </div>
+                    `;
+                } else if (status === 'accepted') {
+                    html += `<div class="tender won"><h2>Bid Accepted!</h2><p><strong>${tender.title}</strong><br>Congratulations!</p></div>`;
+                } else if (status === 'rejected') {
+                    html += `<div class="tender closed"><h3>Bid Rejected</h3><p>Your bid was not selected.</p></div>`;
+                } else if (tender.status === 'open') {
+                    const btnText = myBid ? 'Update Bid' : 'Submit Bid';
+                    html += `
+                        <div class="tender">
+                            <h3>${tender.title} (#${tender.id})</h3>
+                            <p><strong>Value:</strong> ${tender.value} | <strong>Min Bid:</strong> ₹${tender.minBid.toLocaleString()}</p>
+                            <p><strong>Closes:</strong> ${tender.closeDate}</p>
+                            <p style="margin:20px 0;">${tender.desc}</p>
+                            ${myBid ? '<div style="background:#fff4e0;padding:10px;border-radius:12px;color:#FF8C00;font-weight:bold;display:inline-block;">Bid Submitted</div>' : ''}
+                            <button class="bid-btn" data-tender-id="${tender.id}">${btnText}</button>
+                        </div>
+                    `;
+                }
+            });
+
+            container.innerHTML = html || '<p style="text-align:center;padding:100px;color:#888;font-size:20px;">No active tenders</p>';
+
+            // Re-attach event listeners to all buttons
+            document.querySelectorAll('.bid-btn').forEach(btn => {
+                btn.onclick = function () {
+                    openModal(this.getAttribute('data-tender-id'));
+                };
+            });
+        }
+
+        loadTenders();
+        window.addEventListener('storage', e => { if (e.key === KEY) loadTenders(); });
+        setInterval(loadTenders, 5000);
+    </script>
+</body>
+
+</html>

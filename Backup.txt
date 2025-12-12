@@ -1,0 +1,2895 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+const int TDS_PIN = 34;
+
+// WiFi credentials
+const char* ssid = "Galaxy A14 5G AFC6";
+const char* password = "SwattikA1";
+
+// IMPORTANT: use HTTP NOT HTTPS
+String apiURL = "http://10.98.112.93:3000/api/tds";
+
+const float ADC_REF = 3.3;
+const int ADC_RES = 4095;
+const float TDS_SCALE_K = 500.0;
+
+unsigned long lastRead = 0;
+const unsigned long INTERVAL = 1500;
+
+float readVoltage() {
+  int raw = analogRead(TDS_PIN);
+  return (raw * ADC_REF) / ADC_RES;
+}
+
+float readTDS() {
+  return readVoltage() * TDS_SCALE_K;
+}
+
+void setup() {
+  Serial.begin(115200);
+  analogSetPinAttenuation(TDS_PIN, ADC_11db);
+
+  Serial.println("Starting WiFi...");
+  WiFi.begin(ssid, password);
+}
+
+void loop() {
+  if (WiFi.status() != WL_CONNECTED) {
+    static unsigned long lastAttempt = 0;
+    if (millis() - lastAttempt > 5000) {
+      Serial.println("WiFi not connected... retrying...");
+      WiFi.begin(ssid, password);
+      lastAttempt = millis();
+    }
+  }
+
+  if (millis() - lastRead >= INTERVAL) {
+    lastRead = millis();
+
+    float voltage = readVoltage();
+    float tds_ppm = readTDS();
+
+    Serial.printf("Voltage: %.3f V\n", voltage);
+    Serial.printf("TDS: %.1f ppm\n", tds_ppm);
+
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("WiFi NOT connected. Skipping API upload.\n");
+      return;
+    }
+
+    HTTPClient http;
+    http.begin(apiURL);
+    http.addHeader("Content-Type", "application/json");
+
+    String json = "{\"voltage\": " + String(voltage, 3) +
+                  ", \"tds\": " + String(tds_ppm, 1) + "}";
+
+    int httpCode = http.POST(json);
+
+    Serial.print("API Response: ");
+    Serial.println(httpCode);
+
+    http.end();
+  }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Monitoring - Suryadut</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF8C00;
+            --primary-dark: #E67E00;
+            --secondary: #0066CC;
+            --accent: #00AA44;
+            --dark: #F8FAFB;
+            --dark-light: #FFFFFF;
+            --light: #F0F4FF;
+            --text-primary: #0A0E27;
+            --text-secondary: #4A5578;
+            --border: #E0E5F0;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.12);
+            --success: #00AA44;
+            --warning: #FFB347;
+            --danger: #FF4444;
+            --light-gray: #F5F7FA;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #F8FAFB 0%, #F0F4FF 100%);
+            color: #0A0E27;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, #FFA500 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .back-btn {
+            background: none;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* MAIN CONTENT */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .page-title {
+            font-size: 44px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .page-title span {
+            color: var(--primary);
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+
+        /* STATUS BAR */
+        .status-bar {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 25px 30px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .status-value {
+            font-size: 28px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* DASHBOARD GRID */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            box-shadow: var(--shadow);
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 15px 40px rgba(255, 140, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--secondary);
+        }
+
+        .card-value {
+            font-size: 42px;
+            font-weight: 900;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .card-unit {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .card-progress {
+            margin-top: 20px;
+            height: 8px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .card-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, #FFA500 100%);
+            border-radius: 10px;
+        }
+
+        /* PERFORMANCE SECTION */
+        .performance-section {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            height: 250px;
+            background: var(--light-gray);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-chart {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 200px;
+            gap: 15px;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--primary) 0%, #FFA500 100%);
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            min-height: 30px;
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        /* ALERTS */
+        .alerts-section {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .alert-item {
+            background: rgba(0, 170, 68, 0.08);
+            border-left: 4px solid var(--success);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .alert-item.warning {
+            background: rgba(255, 179, 71, 0.08);
+            border-left-color: var(--warning);
+        }
+
+        .alert-item.danger {
+            background: rgba(255, 68, 68, 0.08);
+            border-left-color: var(--danger);
+        }
+
+        .alert-icon {
+            font-size: 24px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .alert-message {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .alert-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        /* OPERATIONS TABLE */
+        .table-section {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            overflow-x: auto;
+            box-shadow: var(--shadow);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--light-gray);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 2px solid var(--border);
+            font-size: 14px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        tr:hover {
+            background: var(--light-gray);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge.active {
+            background: rgba(0, 170, 68, 0.15);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .status-badge.inactive {
+            background: rgba(255, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        /* FOOTER */
+        footer {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
+            box-shadow: var(--shadow);
+        }
+
+        @media (max-width: 768px) {
+            .status-bar {
+                flex-direction: column;
+            }
+
+            .bar-chart {
+                height: 150px;
+            }
+
+            .page-title {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="navbar">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">☀️</div>
+                <span>SURYADUT</span>
+            </a>
+            <button class="back-btn" onclick="window.location.href='index.html'">← Back Home</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 class="page-title">Live <span>Monitoring</span></h1>
+        <p class="page-subtitle">Real-time dashboard of your Suryadut dewatering system performance, analytics, and
+            health status</p>
+
+        <!-- STATUS BAR -->
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-label">System Status</div>
+                <div class="status-value">
+                    <div class="status-dot"></div>
+                    Operational
+                </div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Uptime</div>
+                <div class="status-value">99.8%</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Efficiency</div>
+                <div class="status-value">94.2%</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Last Updated</div>
+                <div class="status-value">Now</div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD CARDS -->
+        <div class="dashboard-grid">
+
+            <div class="card" id="tds-card">
+                <div class="card-title">🌊 TDS Level</div>
+                <div class="card-value" id="tds-value">--</div>
+                <div class="card-unit">ppm</div>
+                <div class="card-progress">
+                    <div class="card-progress-bar" id="tds-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">☀️ Solar Generation</div>
+                <div class="card-value">847</div>
+                <div class="card-unit">kWh / Today</div>
+                <div class="card-progress">
+                    <div class="card-progress-bar" style="width: 85%;"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">⚡ Power Consumption</div>
+                <div class="card-value">756</div>
+                <div class="card-unit">kWh / Today</div>
+                <div class="card-progress">
+                    <div class="card-progress-bar" style="width: 76%;"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">💧 Water Pumped</div>
+                <div class="card-value">2,450</div>
+                <div class="card-unit">Gallons / Hour</div>
+                <div class="card-progress">
+                    <div class="card-progress-bar" style="width: 82%;"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🌡️ Temperature</div>
+                <div class="card-value">42°C</div>
+                <div class="card-unit">Current Temp</div>
+                <div class="card-progress">
+                    <div class="card-progress-bar"
+                        style="width: 45%; background: linear-gradient(90deg, var(--warning) 0%, var(--primary) 100%);">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">💰 Cost Savings</div>
+                <div class="card-value">$892</div>
+                <div class="card-unit">This Month</div>
+                <div class="card-progress">
+                    <div class="card-progress-bar"
+                        style="width: 89%; background: linear-gradient(90deg, var(--accent) 0%, #00CC66 100%);">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">♻️ CO₂ Reduced</div>
+                <div class="card-value">2.3</div>
+                <div class="card-unit">Tons / Month</div>
+                <div class="card-progress">
+                    <div class="card-progress-bar"
+                        style="width: 78%; background: linear-gradient(90deg, var(--accent) 0%, var(--primary) 100%);">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PERFORMANCE CHART -->
+        <div class="performance-section">
+            <div class="section-title">Daily Performance Trend</div>
+            <div class="chart-container">
+                <div class="bar-chart">
+                    <div class="bar" style="height: 45%;"><span class="bar-label">Mon</span></div>
+                    <div class="bar" style="height: 62%;"><span class="bar-label">Tue</span></div>
+                    <div class="bar" style="height: 78%;"><span class="bar-label">Wed</span></div>
+                    <div class="bar" style="height: 55%;"><span class="bar-label">Thu</span></div>
+                    <div class="bar" style="height: 82%;"><span class="bar-label">Fri</span></div>
+                    <div class="bar" style="height: 90%;"><span class="bar-label">Sat</span></div>
+                    <div class="bar" style="height: 70%;"><span class="bar-label">Sun</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ALERTS -->
+        <div class="alerts-section">
+            <div class="section-title">System Alerts</div>
+            <div class="alert-item">
+                <div class="alert-icon">✅</div>
+                <div class="alert-content">
+                    <div class="alert-title">All Systems Operational</div>
+                    <div class="alert-message">All sensors and systems functioning normally</div>
+                    <div class="alert-time">2 minutes ago</div>
+                </div>
+            </div>
+            <div class="alert-item warning">
+                <div class="alert-icon">⚠️</div>
+                <div class="alert-content">
+                    <div class="alert-title">Temperature Rising</div>
+                    <div class="alert-message">System temperature at 42°C - Cooling system activated</div>
+                    <div class="alert-time">15 minutes ago</div>
+                </div>
+            </div>
+            <div class="alert-item">
+                <div class="alert-icon">📊</div>
+                <div class="alert-content">
+                    <div class="alert-title">Monthly Report Generated</div>
+                    <div class="alert-message">August performance report is ready for download</div>
+                    <div class="alert-time">1 hour ago</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- OPERATIONS TABLE -->
+        <div class="table-section">
+            <div class="section-title" style="margin-bottom: 20px;">Pump Operations</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Pump ID</th>
+                        <th>Status</th>
+                        <th>Flow Rate</th>
+                        <th>Pressure</th>
+                        <th>Efficiency</th>
+                        <th>Last Maintenance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#PMP-001</td>
+                        <td><span class="status-badge active">Active</span></td>
+                        <td>1,200 GPM</td>
+                        <td>45 PSI</td>
+                        <td>96%</td>
+                        <td>5 days ago</td>
+                    </tr>
+                    <tr>
+                        <td>#PMP-002</td>
+                        <td><span class="status-badge active">Active</span></td>
+                        <td>1,250 GPM</td>
+                        <td>44 PSI</td>
+                        <td>95%</td>
+                        <td>12 days ago</td>
+                    </tr>
+                    <tr>
+                        <td>#PMP-003</td>
+                        <td><span class="status-badge inactive">Idle</span></td>
+                        <td>0 GPM</td>
+                        <td>0 PSI</td>
+                        <td>0%</td>
+                        <td>7 days ago</td>
+                    </tr>
+                    <tr>
+                        <td>#PMP-004</td>
+                        <td><span class="status-badge active">Active</span></td>
+                        <td>1,180 GPM</td>
+                        <td>43 PSI</td>
+                        <td>94%</td>
+                        <td>3 days ago</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Suryadut - Real-Time Monitoring Dashboard. All rights reserved.</p>
+        <p style="margin-top: 15px; font-size: 14px; color: var(--text-secondary);">Data updates every 30 seconds •
+            For emergencies, contact +1-800-SURYADUT</p>
+    </footer>
+
+    <script>
+        const API_URL = "http://10.98.112.93:3000/api/tds";   // your backend IP
+
+        async function updateTDS() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+
+                // Extract data
+                const tds = data.tds || 0;
+                const voltage = data.voltage || 0;
+
+                // Update card values
+                document.getElementById("tds-value").innerText = tds + " ppm";
+
+                // Progress bar: max 1000 ppm scale
+                const barWidth = Math.min((tds / 1000) * 100, 100);
+                document.getElementById("tds-bar").style.width = barWidth + "%";
+
+                // Update status bar last updated time
+                const lastUpdated = document.querySelector(".status-item:last-child .status-value");
+                lastUpdated.textContent = new Date().toLocaleTimeString();
+
+            } catch (error) {
+                console.log("TDS API ERROR:", error);
+            }
+        }
+
+        // Refresh every 2 seconds
+        setInterval(updateTDS, 2000);
+        updateTDS();
+
+        // Keep your existing subtitle update
+        setInterval(() => {
+            document.querySelector('.page-subtitle').textContent =
+                'Real-time dashboard of your Suryadut dewatering system performance, analytics, and health status | Last synced: ' + new Date().toLocaleTimeString();
+        }, 1000);
+    </script>
+
+</body>
+
+</html>
+
+
+<script>
+const WEATHER_API_KEY = "41ac2c6ea9df4ac387d41320250912";
+const WEATHER_URL = `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=Kolkata&aqi=no`;
+
+const TDS_API = "http://10.98.112.93:3000/api/tds";
+
+// --- SYSTEM CONSTANTS ---
+const MAX_SOLAR_KW = 25;
+const MOTOR_KW = 6.25;  // adjusted based on pumping 1000 m³/day
+const WATER_GALLONS_PER_SEC = 3.06;  // derived from 1000 m³ per 24h
+
+let solarToday = 0;
+let powerToday = 0;
+
+let motorRunning = false;
+let totalWaterGallons = 0;
+
+// ================= WEATHER / SOLAR SYSTEM ==================
+async function updateWeatherMetrics() {
+    try {
+        const res = await fetch(WEATHER_URL);
+        const weather = await res.json();
+
+        const temp = weather.current.temp_c;
+        const solarIntensity = weather.current.uv * 100; // approx W/m²
+
+        // ---------------- Solar Generation (max 25 kW) ----------------
+        const solarKW = (solarIntensity / 1000) * MAX_SOLAR_KW;
+        solarToday += solarKW * (2 / 3600);
+
+        document.querySelectorAll(".card")[1].querySelector(".card-value").innerText =
+            solarToday.toFixed(2);
+
+        // ---------------- Temperature Update ----------------
+        document.querySelectorAll(".card")[4].querySelector(".card-value").innerText =
+            temp + "°C";
+
+        // ---------------- Power Consumption ----------------
+        if (motorRunning) {
+            powerToday += MOTOR_KW * (2 / 3600);
+        }
+
+        document.querySelectorAll(".card")[2].querySelector(".card-value").innerText =
+            powerToday.toFixed(2);
+
+    } catch (err) {
+        console.log("WEATHER API ERROR:", err);
+    }
+}
+
+// ================= TDS UPDATE ====================
+async function updateTDS() {
+    try {
+        const res = await fetch(TDS_API);
+        const data = await res.json();
+
+        const tds = data.tds || 0;
+
+        document.getElementById("tds-value").innerText = tds + " ppm";
+        document.getElementById("tds-bar").style.width =
+            Math.min((tds / 1000) * 100, 100) + "%";
+
+    } catch (err) {
+        console.log("TDS API Error:", err);
+    }
+}
+
+// ================= MOTOR CONTROL ====================
+function toggleMotor() {
+    motorRunning = !motorRunning;
+
+    const motorBtn = document.getElementById("motor-btn");
+
+    if (motorRunning) {
+        motorBtn.innerText = "⛔ Stop Motor";
+        startWaterPumping();
+    } else {
+        motorBtn.innerText = "▶ Start Motor";
+    }
+}
+
+function startWaterPumping() {
+    const waterCard = document.querySelectorAll(".card")[3].querySelector(".card-value");
+
+    const interval = setInterval(() => {
+        if (!motorRunning) {
+            clearInterval(interval);
+            return;
+        }
+
+        totalWaterGallons += WATER_GALLONS_PER_SEC;
+
+        waterCard.innerText = Math.floor(totalWaterGallons).toLocaleString();
+
+    }, 1000);
+}
+
+// Add Motor Button
+document.addEventListener("DOMContentLoaded", () => {
+    const waterCard = document.querySelectorAll(".card")[3];
+    waterCard.innerHTML += `
+        <button id="motor-btn"
+            style="
+                margin-top:15px;
+                padding:10px 20px;
+                background: var(--accent);
+                border:none;
+                color:white;
+                font-weight:600;
+                border-radius:10px;
+                cursor:pointer;
+                width:100%;
+            "
+            onclick="toggleMotor()">
+            ▶ Start Motor
+        </button>
+    `;
+});
+
+// ================= AUTO REFRESH ====================
+setInterval(updateWeatherMetrics, 2000);
+setInterval(updateTDS, 2000);
+
+updateWeatherMetrics();
+updateTDS();
+
+// Subtitle updater
+setInterval(() => {
+    document.querySelector('.page-subtitle').textContent =
+        'Real-time dashboard | Last synced: ' + new Date().toLocaleTimeString();
+}, 1000);
+</script>
+
+<script>
+const WEATHER_API_KEY = "41ac2c6ea9df4ac387d41320250912";
+const WEATHER_URL = `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=Kolkata&aqi=no`;
+
+const TDS_API = "http://10.98.112.93:3000/api/tds";
+
+// --- SYSTEM CONSTANTS ---
+const MAX_SOLAR_KW = 25;
+const MOTOR_KW = 18;  // adjusted based on pumping 1000 m³/day
+const WATER_GALLONS_PER_SEC = 11.57;  // derived from 1000 m³ per 24h
+
+let solarToday = 0;
+let powerToday = 0;
+
+let motorRunning = false;
+let totalWaterGallons = 0;
+
+// ================= WEATHER / SOLAR SYSTEM ==================
+async function updateWeatherMetrics() {
+    try {
+        const res = await fetch(WEATHER_URL);
+        const weather = await res.json();
+
+        const temp = weather.current.temp_c;
+        const solarIntensity = weather.current.uv * 100; // approx W/m²
+
+        // ---------------- Solar Generation (max 25 kW) ----------------
+        const solarKW = (solarIntensity / 1000) * MAX_SOLAR_KW;
+        solarToday += solarKW * (2 / 3600);
+
+        document.querySelectorAll(".card")[1].querySelector(".card-value").innerText =
+            solarToday.toFixed(2);
+
+        // ---------------- Temperature Update ----------------
+        document.querySelectorAll(".card")[4].querySelector(".card-value").innerText =
+            temp + "°C";
+
+        // ---------------- Power Consumption ----------------
+        if (motorRunning) {
+            powerToday += MOTOR_KW * (2 / 3600);
+        }
+
+        document.querySelectorAll(".card")[2].querySelector(".card-value").innerText =
+            powerToday.toFixed(2);
+
+    } catch (err) {
+        console.log("WEATHER API ERROR:", err);
+    }
+}
+
+// ================= TDS UPDATE ====================
+async function updateTDS() {
+    try {
+        const res = await fetch(TDS_API);
+        const data = await res.json();
+
+        const tds = data.tds || 0;
+
+        document.getElementById("tds-value").innerText = tds + " ppm";
+        document.getElementById("tds-bar").style.width =
+            Math.min((tds / 1000) * 100, 100) + "%";
+
+    } catch (err) {
+        console.log("TDS API Error:", err);
+    }
+}
+
+// ================= MOTOR CONTROL ====================
+function toggleMotor() {
+    motorRunning = !motorRunning;
+
+    const motorBtn = document.getElementById("motor-btn");
+
+    if (motorRunning) {
+        motorBtn.innerText = "⛔ Stop Motor";
+        startWaterPumping();
+    } else {
+        motorBtn.innerText = "▶ Start Motor";
+    }
+}
+
+function startWaterPumping() {
+    const waterCard = document.querySelectorAll(".card")[3].querySelector(".card-value");
+
+    const interval = setInterval(() => {
+        if (!motorRunning) {
+            clearInterval(interval);
+            return;
+        }
+
+        totalWaterGallons += WATER_GALLONS_PER_SEC;
+
+        waterCard.innerText = Math.floor(totalWaterGallons).toLocaleString();
+
+    }, 1000);
+}
+
+// Add Motor Button
+document.addEventListener("DOMContentLoaded", () => {
+    const waterCard = document.querySelectorAll(".card")[3];
+    waterCard.innerHTML += `
+        
+    `;
+});
+
+// ================= AUTO REFRESH ====================
+setInterval(updateWeatherMetrics, 2000);
+setInterval(updateTDS, 2000);
+
+updateWeatherMetrics();
+updateTDS();
+
+// Subtitle updater
+setInterval(() => {
+    document.querySelector('.page-subtitle').textContent =
+        'Real-time dashboard | Last synced: ' + new Date().toLocaleTimeString();
+}, 1000);
+</script>
+
+<script>
+const WEATHER_API_KEY = "41ac2c6ea9df4ac387d41320250912";
+const WEATHER_URL = `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=Kolkata&aqi=no`;
+
+const TDS_API = "http://10.98.112.93:3000/api/tds";
+
+// --- SYSTEM CONSTANTS ---
+const MAX_SOLAR_KW = 25;
+const MOTOR_KW = 18;                   
+const WATER_LITRES_PER_SEC = 11.57;    
+
+let solarToday = 0;
+let powerToday = 0;
+
+let motorRunning = false;
+let totalWaterLitres = 0;
+
+// HISTORY STORAGE
+let lastCycleWater = 0;
+let lastCyclePower = 0;
+
+// ================= WEATHER & SOLAR SYSTEM ==================
+async function updateWeatherMetrics() {
+    try {
+        const res = await fetch(WEATHER_URL);
+        const weather = await res.json();
+
+        const temp = weather.current.temp_c;
+        const solarIntensity = weather.current.uv * 100;
+
+        // Solar Generation
+        const solarKW = (solarIntensity / 1000) * MAX_SOLAR_KW;
+        solarToday += solarKW * (2 / 3600);
+
+        document.querySelectorAll(".card")[1].querySelector(".card-value")
+            .innerText = solarToday.toFixed(2);
+
+        // Temperature
+        document.querySelectorAll(".card")[4].querySelector(".card-value")
+            .innerText = temp + "°C";
+
+        // Power consumption only when motor is ON
+        if (motorRunning) {
+            powerToday += MOTOR_KW * (2 / 3600);
+        }
+
+        document.querySelectorAll(".card")[2].querySelector(".card-value")
+            .innerText = powerToday.toFixed(2);
+
+    } catch (err) {
+        console.log("WEATHER API ERROR:", err);
+    }
+}
+
+// ================= TDS UPDATE ====================
+async function updateTDS() {
+    try {
+        const res = await fetch(TDS_API);
+        const data = await res.json();
+        const tds = data.tds || 0;
+
+        document.getElementById("tds-value").innerText = tds + " ppm";
+        document.getElementById("tds-bar").style.width =
+            Math.min((tds / 1000) * 100, 100) + "%";
+
+    } catch (err) {
+        console.log("TDS API Error:", err);
+    }
+}
+
+// ================= MOTOR CONTROL ====================
+function toggleMotor() {
+    motorRunning = !motorRunning;
+    const motorBtn = document.getElementById("motor-btn");
+
+    if (motorRunning) {
+
+        // Save last cycle history
+        lastCycleWater = totalWaterLitres;
+        lastCyclePower = powerToday;
+
+        // Update history section
+        document.getElementById("history-water").innerText =
+            lastCycleWater.toLocaleString() + " L";
+
+        document.getElementById("history-power").innerText =
+            lastCyclePower.toFixed(2) + " kWh";
+
+        // Update bars (scale to 200,000 L max visually)
+        document.getElementById("history-water-bar").style.width =
+            Math.min((lastCycleWater / 200000) * 100, 100) + "%";
+
+        // Power bar scaled to 50 kWh max
+        document.getElementById("history-power-bar").style.width =
+            Math.min((lastCyclePower / 50) * 100, 100) + "%";
+
+        // Reset for new cycle
+        totalWaterLitres = 0;
+        powerToday = 0;
+
+        motorBtn.innerText = "⛔ Stop Motor";
+        startWaterPumping();
+
+    } else {
+        motorBtn.innerText = "▶ Start Motor";
+    }
+}
+
+function startWaterPumping() {
+    const waterCard = document.querySelectorAll(".card")[3].querySelector(".card-value");
+
+    const interval = setInterval(() => {
+        if (!motorRunning) {
+            clearInterval(interval);
+            return;
+        }
+
+        totalWaterLitres += WATER_LITRES_PER_SEC;
+
+        waterCard.innerText =
+            Math.floor(totalWaterLitres).toLocaleString() + " L";
+
+    }, 1000);
+}
+
+// ================= AUTO REFRESH ====================
+setInterval(updateWeatherMetrics, 2000);
+setInterval(updateTDS, 2000);
+
+updateWeatherMetrics();
+updateTDS();
+
+// Subtitle time update
+setInterval(() => {
+    document.querySelector('.page-subtitle').textContent =
+        'Real-time dashboard | Last synced: ' + new Date().toLocaleTimeString();
+}, 1000);
+</script>
+<script>
+/*
+  Updated script:
+  - totalSolar always accumulates (solar produced even when motor off)
+  - cycleSolar accumulates only while motor is running and resets when a new cycle starts
+  - history stores up to 5 cycles with water (L), power (kWh), solar (kWh) and timestamp
+  - other behavior unchanged (water in L/s, motor 18 kW, TDS updates, etc.)
+*/
+
+const WEATHER_API_KEY = "41ac2c6ea9df4ac387d41320250912";
+const WEATHER_URL = `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=Kolkata&aqi=no`;
+
+const TDS_API = "http://10.98.112.93:3000/api/tds";
+
+// --- SYSTEM CONSTANTS ---
+const MAX_SOLAR_KW = 25;                // Max solar capacity (kW)
+const MOTOR_KW = 18;                    // Motor power (kW)
+const WATER_LITRES_PER_SEC = 11.57;     // 1000 m³ per 24h -> L/s
+
+// Cumulative totals
+let totalSolar = 0;      // kWh - cumulative overall (keeps accumulating regardless of motor)
+let cycleSolar = 0;      // kWh - accumulates only while motor is running (resets each cycle)
+let powerToday = 0;      // kWh - for current cycle
+let totalWaterLitres = 0; // L - for current cycle
+
+// Motor & history
+let motorRunning = false;
+let cycleHistory = [];   // latest cycles stored here (unshifted), max 5
+
+// Helper: get card elements by index mapping used in previous code
+// Mapping used in earlier scripts:
+// 0: TDS card
+// 1: Solar (total) card
+// 2: Power consumption card
+// 3: Water pumped card
+// 4: Temperature card
+function getCardValue(idx) {
+  const el = document.querySelectorAll(".card")[idx];
+  return el ? el.querySelector(".card-value") : null;
+}
+
+// ================= WEATHER (SOLAR) UPDATES ==================
+async function updateWeatherMetrics() {
+    try {
+        const res = await fetch(WEATHER_URL);
+        const weather = await res.json();
+
+        const temp = weather.current.temp_c;
+        const solarIntensity = (weather.current.uv ?? 0) * 100; // approximate W/m²
+
+        // Calculate solar generation (kW) from intensity
+        const solarKW = (solarIntensity / 1000) * MAX_SOLAR_KW; // instantaneous kW
+
+        // ALWAYS accumulate into totalSolar (kWh). interval is 2 seconds.
+        const kWhThisInterval = solarKW * (2 / 3600);
+        totalSolar += kWhThisInterval;
+
+        // If motor is running, also accumulate this interval to the current cycle's solar
+        if (motorRunning) {
+            cycleSolar += kWhThisInterval;
+        }
+
+        // Update Solar Generation card (totalSolar)
+        const solarCardVal = getCardValue(1);
+        if (solarCardVal) solarCardVal.innerText = totalSolar.toFixed(2);
+
+        // Update Solar Intensity display if present
+        const solarIntensityEl = document.getElementById("solar-intensity-value");
+        const solarIntensityBar = document.getElementById("solar-intensity-bar");
+        if (solarIntensityEl) solarIntensityEl.innerText = Math.round(solarIntensity) + " W/m²";
+        if (solarIntensityBar) solarIntensityBar.style.width = Math.min((solarIntensity / 1000) * 100, 100) + "%";
+
+        // Temperature card update (index 4)
+        const tempCardVal = getCardValue(4);
+        if (tempCardVal) tempCardVal.innerText = temp + "°C";
+
+        // Power consumption: only accumulate when motor is ON
+        if (motorRunning) {
+            powerToday += MOTOR_KW * (2 / 3600); // kWh for 2-second interval
+        }
+        const powerCardVal = getCardValue(2);
+        if (powerCardVal) powerCardVal.innerText = powerToday.toFixed(2);
+
+    } catch (err) {
+        console.log("WEATHER API ERROR:", err);
+    }
+}
+
+// ================= TDS UPDATE ====================
+async function updateTDS() {
+    try {
+        const res = await fetch(TDS_API);
+        const data = await res.json();
+
+        const tds = data.tds || 0;
+        const tdsEl = document.getElementById("tds-value");
+        const tdsBar = document.getElementById("tds-bar");
+        if (tdsEl) tdsEl.innerText = tds + " ppm";
+        if (tdsBar) tdsBar.style.width = Math.min((tds / 1000) * 100, 100) + "%";
+
+    } catch (err) {
+        console.log("TDS API Error:", err);
+    }
+}
+
+// ================= MOTOR CONTROL ====================
+// toggles motor. When motor starts -> reset per-cycle counters (water,power,cycleSolar).
+// When motor stops -> record cycle using the cycle-specific counters (water, power, cycleSolar).
+function toggleMotor() {
+    motorRunning = !motorRunning;
+    const motorBtn = document.getElementById("motor-btn");
+    if (!motorBtn) {
+        console.warn("motor-btn not found in DOM.");
+    }
+
+    if (motorRunning) {
+        // Start a brand-new cycle: reset per-cycle counters
+        totalWaterLitres = 0;
+        powerToday = 0;
+        cycleSolar = 0;
+
+        if (motorBtn) motorBtn.innerText = "⛔ Stop Motor";
+        startWaterPumping();
+    } else {
+        if (motorBtn) motorBtn.innerText = "▶ Start Motor";
+        // Motor stopped => save cycle with water, power, and solar produced during the cycle
+        saveCycleHistory();
+    }
+}
+
+// startWaterPumping increments water per second while motor is running
+function startWaterPumping() {
+    const waterCardVal = getCardValue(3);
+    const interval = setInterval(() => {
+        if (!motorRunning) {
+            clearInterval(interval);
+            return;
+        }
+        totalWaterLitres += WATER_LITRES_PER_SEC;
+        if (waterCardVal) waterCardVal.innerText = Math.floor(totalWaterLitres).toLocaleString() + " L";
+    }, 1000);
+}
+
+// ================= SAVE CYCLE HISTORY ====================
+function saveCycleHistory() {
+    // Build cycle object
+    const cycleData = {
+        water: totalWaterLitres,          // litres for this cycle
+        power: powerToday,                // kWh consumed this cycle
+        solar: cycleSolar,                // kWh generated during this cycle
+        timestamp: new Date().toLocaleString()
+    };
+
+    // Insert newest first
+    cycleHistory.unshift(cycleData);
+
+    // Keep only last 5
+    if (cycleHistory.length > 5) cycleHistory.length = 5;
+
+    renderHistory();
+}
+
+// ================= DISPLAY HISTORY (last 5 cycles) ====================
+function renderHistory() {
+    const list = document.getElementById("cycle-list");
+    if (!list) return;
+
+    if (cycleHistory.length === 0) {
+        list.innerHTML = "No cycles recorded yet.";
+        return;
+    }
+
+    // Render newest -> oldest as Cycle 1..N (1 = most recent)
+    list.innerHTML = cycleHistory.map((c, idx) => {
+        const cycleNum = idx + 1; // show 1..N for readability
+        return `
+            <div style="margin-bottom:12px;">
+                <strong>Cycle ${cycleNum}</strong> — ${c.timestamp}<br>
+                🌊 Water: <strong>${Math.floor(c.water).toLocaleString()} L</strong><br>
+                ⚡ Power: <strong>${c.power.toFixed(2)} kWh</strong><br>
+                ☀️ Solar (during cycle): <strong>${c.solar.toFixed(2)} kWh</strong>
+            </div>
+            <hr style="opacity:.12;">
+        `;
+    }).join("");
+}
+
+// ================= AUTO REFRESH LOOPS ====================
+setInterval(updateWeatherMetrics, 2000);
+setInterval(updateTDS, 2000);
+
+// initial calls
+updateWeatherMetrics();
+updateTDS();
+
+// Subtitle updater
+setInterval(() => {
+    const el = document.querySelector('.page-subtitle');
+    if (el) el.textContent = 'Real-time dashboard | Last synced: ' + new Date().toLocaleTimeString();
+}, 1000);
+
+// Ensure renderHistory runs on load so UI reflects existing cycles (if any)
+document.addEventListener("DOMContentLoaded", () => {
+    renderHistory();
+});
+</script>
+
+/*
+  Unified ESP32 firmware:
+  - Reads TDS (analog)
+  - Reads SC502 / HC-SR04-style ultrasonic (TRIG/ECHO)
+  - Controls 12V relay (active LOW) for motor ON/OFF
+  - Hosts a simple HTTP server for relay control and status:
+      GET /motor/on   -> turns motor ON
+      GET /motor/off  -> turns motor OFF
+      GET /status     -> returns JSON with latest sensor values and motor state
+  - Periodically POSTs sensor data to a backend:
+      POST http://10.98.112.93:3000/api/sensors   (change if needed)
+  - Replace WiFi SSID/PASSWORD and backend URL as required.
+*/
+
+#include <WiFi.h>
+#include <WebServer.h>
+#include <HTTPClient.h>
+
+// ---------- USER CONFIG ----------
+const char* WIFI_SSID     = "Galaxy A14 5G AFC6";   // change to your SSID
+const char* WIFI_PASS     = "SwattikA1";           // change to your password
+
+const char* BACKEND_URL   = "http://10.98.112.93:3000/api/sensors"; // POST destination (HTTP)
+const unsigned long POST_INTERVAL_MS = 1500; // how often to POST sensor data
+
+// ---------- PIN CONFIG ----------
+const int TDS_PIN     = 34;  // analog input for TDS sensor
+const int TRIG_PIN    = 5;   // ultrasonic trigger
+const int ECHO_PIN    = 18;  // ultrasonic echo (use voltage divider to protect ESP32)
+const int RELAY_PIN   = 26;  // relay control (active LOW)
+
+// ---------- ADC / SENSOR CONSTANTS ----------
+const float ADC_REF = 3.3;
+const int ADC_MAX = 4095;
+const float TDS_SCALE_K = 500.0; // scale factor used previously (adjust if required)
+
+// ---------- NETWORK / SERVER ----------
+WebServer server(80);
+
+// ---------- RUNTIME STATE ----------
+volatile bool motorState = false; // false = OFF, true = ON
+unsigned long lastPost = 0;
+float lastVoltage = 0.0;
+float lastTDSppm = 0.0;
+float lastDistanceCM = 0.0;
+
+// ---------- UTILITY FUNCTIONS ----------
+
+/* Read analog voltage from given pin (using ADC calibration constants above) */
+float readAnalogVoltage(int pin) {
+  int raw = analogRead(pin);
+  // protect against division by zero
+  if (raw < 0) raw = 0;
+  if (raw > ADC_MAX) raw = ADC_MAX;
+  return (raw * ADC_REF) / ADC_MAX;
+}
+
+/* Convert measured voltage to a TDS value (ppm).
+   This uses a simple linear scale used in earlier sketches.
+   Adjust TDS_SCALE_K to calibrate for your specific hardware.
+*/
+float readTDSppm() {
+  float v = readAnalogVoltage(TDS_PIN);
+  return v * TDS_SCALE_K;
+}
+
+/* Measure distance in cm using ultrasonic sensor (HC-SR04/SC502 style).
+   Note: SC502 echo is 5V. Use a voltage divider (e.g., 10k/15k) to bring ECHO down to ~3.0V safe for ESP32.
+*/
+float measureDistanceCM() {
+  // Ensure TRIG low
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  // Send a 10us pulse
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Read echo pulse (timeout in microseconds)
+  unsigned long duration = pulseIn(ECHO_PIN, HIGH, 30000UL); // timeout 30ms => ~5m max
+  if (duration == 0) {
+    // timeout / no echo
+    return -1.0;
+  }
+  // sound speed approx 343 m/s => 0.0343 cm/us
+  float distance = (duration * 0.0343) / 2.0;
+  return distance;
+}
+
+/* Switch relay on (active LOW) */
+void relayTurnOn() {
+  digitalWrite(RELAY_PIN, LOW); // active LOW
+  motorState = true;
+  Serial.println("Relay: MOTOR ON");
+}
+
+/* Switch relay off */
+void relayTurnOff() {
+  digitalWrite(RELAY_PIN, HIGH); // set HIGH to turn relay OFF
+  motorState = false;
+  Serial.println("Relay: MOTOR OFF");
+}
+
+/* Build JSON payload and POST to backend */
+void postSensorData() {
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  HTTPClient http;
+  http.begin(BACKEND_URL);
+  http.addHeader("Content-Type", "application/json");
+
+  // Use the latest sensor variables (lastVoltage, lastTDSppm, lastDistanceCM, motorState)
+  String json = "{";
+  json += "\"voltage\":" + String(lastVoltage, 3) + ",";
+  json += "\"tds\":" + String(lastTDSppm, 2) + ",";
+  json += "\"distance_cm\":" + String(lastDistanceCM, 2) + ",";
+  json += "\"motor_on\":" + String(motorState ? "true" : "false");
+  json += "}";
+
+  int code = http.POST(json);
+  Serial.printf("POST %s -> %d\n", BACKEND_URL, code);
+  http.end();
+}
+
+/* Return JSON status for HTTP GET /status */
+String getStatusJson() {
+  String s = "{";
+  s += "\"voltage\":" + String(lastVoltage, 3) + ",";
+  s += "\"tds\":" + String(lastTDSppm, 2) + ",";
+  s += "\"distance_cm\":" + String(lastDistanceCM, 2) + ",";
+  s += "\"motor_on\":" + String(motorState ? "true" : "false");
+  s += "}";
+  return s;
+}
+
+// ---------- HTTP HANDLERS ----------
+
+void handleRoot() {
+  String html = "<html><body><h3>ESP32 Sensor + Relay</h3>";
+  html += "<p><a href='/motor/on'>Turn Motor ON</a></p>";
+  html += "<p><a href='/motor/off'>Turn Motor OFF</a></p>";
+  html += "<p><a href='/status'>Status (JSON)</a></p>";
+  html += "</body></html>";
+  server.send(200, "text/html", html);
+}
+
+void handleMotorOn() {
+  relayTurnOn();
+  server.send(200, "application/json", "{\"status\":\"motor_on\"}");
+}
+
+void handleMotorOff() {
+  relayTurnOff();
+  server.send(200, "application/json", "{\"status\":\"motor_off\"}");
+}
+
+void handleStatus() {
+  String json = getStatusJson();
+  server.send(200, "application/json", json);
+}
+
+// ---------- setup / loop ----------
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+
+  // Pins
+  analogReadResolution(12); // 12-bit ADC (0-4095)
+  pinMode(TDS_PIN, INPUT);
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, HIGH); // ensure relay OFF by default (active LOW)
+
+  // Connect to WiFi
+  Serial.printf("Connecting to WiFi: %s\n", WIFI_SSID);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  unsigned long start = millis();
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(250);
+    Serial.print(".");
+    if (millis() - start > 20000) {
+      Serial.println("\nWarning: WiFi connect timeout. Will keep trying in background.");
+      break;
+    }
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nWiFi connected. IP: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("\nWiFi not connected yet. Keep watch in loop.");
+  }
+
+  // Setup HTTP server endpoints
+  server.on("/", handleRoot);
+  server.on("/motor/on", handleMotorOn);
+  server.on("/motor/off", handleMotorOff);
+  server.on("/status", handleStatus);
+  server.begin();
+  Serial.println("HTTP server started.");
+
+  lastPost = millis();
+}
+
+void loop() {
+  // Serve HTTP
+  server.handleClient();
+
+  // read sensors and update last* variables every POST_INTERVAL_MS
+  unsigned long now = millis();
+  if (now - lastPost >= POST_INTERVAL_MS) {
+    lastPost = now;
+
+    // TDS
+    lastVoltage = readAnalogVoltage(TDS_PIN);
+    lastTDSppm = readTDSppm();
+
+    // Ultrasonic
+    float dist = measureDistanceCM();
+    if (dist < 0) {
+      // no reading (timeout) -> keep previous but mark as -1 if you want
+      lastDistanceCM = -1.0;
+    } else {
+      lastDistanceCM = dist;
+    }
+
+    // Debug print
+    Serial.printf("V: %.3f V, TDS: %.2f ppm, Dist: %.2f cm, Motor: %s\n",
+                  lastVoltage, lastTDSppm, lastDistanceCM,
+                  motorState ? "ON" : "OFF");
+
+    // Send to backend
+    postSensorData();
+  }
+
+  // small yield to keep things responsive
+  delay(10);
+}
+
+<script>
+const WEATHER_API_KEY = "41ac2c6ea9df4ac387d41320250912";
+const WEATHER_URL = `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=Kolkata&aqi=no`;
+
+const API_BASE = "http://10.98.112.93:3000";
+
+// SYSTEM CONSTANTS
+const MAX_SOLAR_KW = 25;
+const MOTOR_KW = 18;
+const WATER_LPS = 11.57;
+
+// LIVE VALUES
+let totalSolar = 0;
+let cycleSolar = 0;
+let powerToday = 0;
+let totalWaterLitres = 0;
+
+let motorRunning = false;
+let cycleHistory = [];
+
+// CARD SELECTOR
+function card(idx) {
+    return document.querySelectorAll(".card")[idx].querySelector(".card-value");
+}
+
+/* ---------------- BACKEND MOTOR CONTROL ---------------- */
+
+async function sendMotorCommand(on) {
+    try {
+        await fetch(`${API_BASE}/api/motor/${on ? "on" : "off"}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        });
+        console.log("Motor command sent:", on ? "ON" : "OFF");
+    } catch (e) {
+        console.log("Motor command failed:", e);
+    }
+}
+
+/* -------------- FRONTEND MOTOR BUTTON LOGIC -------------- */
+function toggleMotor() {
+    motorRunning = !motorRunning;
+    const btn = document.getElementById("motor-btn");
+
+    if (motorRunning) {
+        btn.innerText = "⛔ Stop Motor";
+        sendMotorCommand(true);
+
+        totalWaterLitres = 0;
+        powerToday = 0;
+        cycleSolar = 0;
+
+        startWaterPumping();
+    } else {
+        btn.innerText = "▶ Start Motor";
+        sendMotorCommand(false);
+
+        saveCycle();
+    }
+}
+
+/* ------------- WATER PUMP COUNT (per-cycle) ------------- */
+function startWaterPumping() {
+    const waterCard = card(3);
+
+    const interval = setInterval(() => {
+        if (!motorRunning) {
+            clearInterval(interval);
+            return;
+        }
+
+        totalWaterLitres += WATER_LPS;
+        waterCard.innerText = Math.floor(totalWaterLitres).toLocaleString() + " L";
+    }, 1000);
+}
+
+/* ----------------- WEATHER + SOLAR UPDATE ----------------- */
+async function updateWeatherMetrics() {
+    try {
+        const res = await fetch(WEATHER_URL);
+        const weather = await res.json();
+
+        const temp = weather.current.temp_c;
+        const solarIntensity = (weather.current.uv ?? 0) * 100;
+
+        const solarKW = (solarIntensity / 1000) * MAX_SOLAR_KW;
+        const kWhTick = solarKW * (2 / 3600);
+
+        totalSolar += kWhTick;
+        if (motorRunning) cycleSolar += kWhTick;
+
+        card(1).innerText = totalSolar.toFixed(2);
+        card(4).innerText = temp + "°C";
+
+        if (motorRunning) {
+            powerToday += MOTOR_KW * (2 / 3600);
+        }
+
+        card(2).innerText = powerToday.toFixed(2);
+
+    } catch (e) {
+        console.log("Weather API error:", e);
+    }
+}
+
+/* --------------------- GET SENSOR DATA --------------------- */
+async function fetchSensorData() {
+    try {
+        const res = await fetch(`${API_BASE}/api/sensors`);
+        const data = await res.json();
+
+        // Update TDS
+        document.getElementById("tds-value").innerText = data.tds + " ppm";
+        document.getElementById("tds-bar").style.width =
+            Math.min((data.tds / 1000) * 100, 100) + "%";
+
+        // Update ultrasonic (convert cm to readable)
+        if (data.distance_cm && data.distance_cm > 0) {
+            console.log("Ultrasonic Distance:", data.distance_cm, "cm");
+        }
+
+        // Update motor state from backend (if ESP32 toggles externally)
+        if (data.motor_on !== motorRunning) {
+            motorRunning = data.motor_on;
+            document.getElementById("motor-btn").innerText =
+                motorRunning ? "⛔ Stop Motor" : "▶ Start Motor";
+        }
+
+    } catch (e) {
+        console.log("Sensor API error:", e);
+    }
+}
+
+/* ---------------------- SAVE CYCLE DATA ---------------------- */
+function saveCycle() {
+    const cycle = {
+        water: totalWaterLitres,
+        solar: cycleSolar,
+        power: powerToday,
+        timestamp: new Date().toLocaleString()
+    };
+
+    cycleHistory.unshift(cycle);
+    if (cycleHistory.length > 5) cycleHistory.length = 5;
+
+    renderHistory();
+}
+
+/* ---------------- HISTORY UI RENDER ---------------- */
+function renderHistory() {
+    const div = document.getElementById("cycle-list");
+
+    if (!cycleHistory.length) {
+        div.innerHTML = "No cycles recorded yet.";
+        return;
+    }
+
+    div.innerHTML = cycleHistory
+        .map(
+            (c, i) => `
+        <div style="margin-bottom:15px;">
+            <strong>Cycle ${i + 1}</strong> — ${c.timestamp}<br>
+            🌊 Water: <strong>${Math.floor(c.water).toLocaleString()} L</strong><br>
+            ☀️ Solar Used: <strong>${c.solar.toFixed(2)} kWh</strong><br>
+            ⚡ Power: <strong>${c.power.toFixed(2)} kWh</strong>
+        </div>
+        <hr style="opacity:0.15;">
+    `
+        )
+        .join("");
+}
+
+/* ------------------- LOOP TIMERS ------------------- */
+setInterval(updateWeatherMetrics, 2000);
+setInterval(fetchSensorData, 1500);
+
+updateWeatherMetrics();
+fetchSensorData();
+renderHistory();
+
+/* Subtitle */
+setInterval(() => {
+    document.querySelector(".page-subtitle").textContent =
+        "Real-time dashboard | Last synced: " + new Date().toLocaleTimeString();
+}, 1000);
+</script>
+
+async function updateWeatherMetrics() {
+    try {
+        const res = await fetch(WEATHER_URL);
+        const weather = await res.json();
+
+        const temp = weather.current.temp_c;
+        const solarIntensity = (weather.current.uv ?? 0) * 100;
+
+        // Time since last update
+        let now = Date.now();
+        let hoursPassed = (now - lastSolarUpdate) / 3600000;
+        lastSolarUpdate = now;
+
+        // Solar generation
+        const solarKW = (solarIntensity / 1000) * MAX_SOLAR_KW;
+        const kWhTick = solarKW * hoursPassed;
+
+        totalSolar += kWhTick;
+        if (motorRunning) cycleSolar += kWhTick;
+
+        // Update cards
+        document.getElementById("solar-value").innerText = totalSolar.toFixed(2);
+        document.getElementById("temperature-value").innerText = temp + "°C";
+
+        if (motorRunning) {
+            powerToday += MOTOR_KW * hoursPassed;
+        }
+
+        document.getElementById("power-value").innerText = powerToday.toFixed(2);
+
+    } catch (e) {
+        console.log("Weather API error:", e);
+    }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Monitoring - Suryadut</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF8C00;
+            --primary-dark: #E67E00;
+            --secondary: #0066CC;
+            --accent: #00AA44;
+            --dark: #F8FAFB;
+            --dark-light: #FFFFFF;
+            --light: #F0F4FF;
+            --text-primary: #0A0E27;
+            --text-secondary: #4A5578;
+            --border: #E0E5F0;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.12);
+            --success: #00AA44;
+            --warning: #FFB347;
+            --danger: #FF4444;
+            --light-gray: #F5F7FA;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #F8FAFB 0%, #F0F4FF 100%);
+            color: #0A0E27;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, #FFA500 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .back-btn {
+            background: none;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* MAIN CONTENT */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+
+        .page-title {
+            font-size: 44px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .page-title span {
+            color: var(--primary);
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+
+        /* STATUS BAR */
+        .status-bar {
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 25px 30px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .status-item {
+            text-align: center;
+        }
+
+        .status-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .status-value {
+            font-size: 28px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* DASHBOARD GRID */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            box-shadow: var(--shadow);
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 15px 40px rgba(255, 140, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--secondary);
+        }
+
+        .card-value {
+            font-size: 42px;
+            font-weight: 900;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .card-unit {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .card-progress {
+            margin-top: 20px;
+            height: 8px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .card-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, #FFA500 100%);
+            border-radius: 10px;
+        }
+
+        /* PERFORMANCE SECTION */
+        .performance-section {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            height: 250px;
+            background: var(--light-gray);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-chart {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 200px;
+            gap: 15px;
+        }
+
+        .bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--primary) 0%, #FFA500 100%);
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            min-height: 30px;
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        /* ALERTS */
+        .alerts-section {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .alert-item {
+            background: rgba(0, 170, 68, 0.08);
+            border-left: 4px solid var(--success);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .alert-item.warning {
+            background: rgba(255, 179, 71, 0.08);
+            border-left-color: var(--warning);
+        }
+
+        .alert-item.danger {
+            background: rgba(255, 68, 68, 0.08);
+            border-left-color: var(--danger);
+        }
+
+        .alert-icon {
+            font-size: 24px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .alert-message {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .alert-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        /* OPERATIONS TABLE */
+        .table-section {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            overflow-x: auto;
+            box-shadow: var(--shadow);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--light-gray);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 2px solid var(--border);
+            font-size: 14px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        tr:hover {
+            background: var(--light-gray);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge.active {
+            background: rgba(0, 170, 68, 0.15);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .status-badge.inactive {
+            background: rgba(255, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        /* FOOTER */
+        footer {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--text-primary);
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
+            box-shadow: var(--shadow);
+        }
+
+        @media (max-width: 768px) {
+            .status-bar {
+                flex-direction: column;
+            }
+
+            .bar-chart {
+                height: 150px;
+            }
+
+            .page-title {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+    <div class="navbar">
+        <a href="index.html" class="logo">
+            <div class="logo-icon">☀️</div>
+            <span>SURYADUT</span>
+        </a>
+
+        <div style="display:flex; align-items:center; gap:15px;">
+
+            <button class="back-btn" onclick="window.location.href='index.html'">
+                ← Back Home
+            </button>
+
+            <!-- ⭐ NEW START/STOP MOTOR BUTTON ⭐ -->
+            <button id="motor-btn"
+                style="
+                    padding:10px 22px;
+                    background: var(--accent);
+                    border:none;
+                    color:white;
+                    font-weight:600;
+                    border-radius:10px;
+                    cursor:pointer;
+                    box-shadow: var(--shadow);
+                "
+                onclick="toggleMotor()">
+                ▶ Start Motor
+            </button>
+
+        </div>
+    </div>
+</header>
+
+
+    <div class="container">
+        <h1 class="page-title">Live <span>Monitoring</span></h1>
+        <p class="page-subtitle">Real-time dashboard of your Suryadut dewatering system performance, analytics, and
+            health status</p>
+
+        <!-- STATUS BAR -->
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-label">System Status</div>
+                <div class="status-value">
+                    <div class="status-dot"></div>
+                    Operational
+                </div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Uptime</div>
+                <div class="status-value">99.8%</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Efficiency</div>
+                <div class="status-value">94.2%</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Last Updated</div>
+                <div class="status-value">Now</div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD CARDS -->
+        <div class="dashboard-grid">
+
+            <div class="card" id="tds-card">
+                <div class="card-title">🌊 TDS Level</div>
+                <div class="card-value" id="tds-value">--</div>
+                <div class="card-unit">ppm</div>
+                <div class="card-progress">
+                    <div class="card-progress-bar" id="tds-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="card">
+    <div class="card-title">☀️ Solar Generation</div>
+    <div class="card-value" id="solar-value">0.00</div>
+    <div class="card-unit">kWh / Today</div>
+    <div class="card-progress">
+        <div class="card-progress-bar" id="solar-bar" style="width: 0%;"></div>
+    </div>
+</div>
+
+            <div class="card">
+    <div class="card-title">📏 Water Level</div>
+    <div class="card-value" id="distance-value">--</div>
+    <div class="card-unit">cm</div>
+    <div class="card-progress">
+        <div class="card-progress-bar" id="distance-bar" style="width: 0%;"></div>
+    </div>
+</div>
+
+
+            <div class="card">
+    <div class="card-title">⚡ Power Consumption</div>
+    <div class="card-value" id="power-value">0.00</div>
+    <div class="card-unit">kWh / Today</div>
+    <div class="card-progress">
+        <div class="card-progress-bar" id="power-bar" style="width: 0%;"></div>
+    </div>
+</div>
+
+
+            <div class="card">
+    <div class="card-title">💧 Water Pumped</div>
+    <div class="card-value" id="water-value">0</div>
+    <div class="card-unit">Litres</div>
+    <div class="card-progress">
+        <div class="card-progress-bar" id="water-bar" style="width: 0%;"></div>
+    </div>
+</div>
+
+
+            <div class="card">
+    <div class="card-title">🌡️ Temperature</div>
+    <div class="card-value" id="temperature-value">--°C</div>
+    <div class="card-unit">Current Temp</div>
+    <div class="card-progress">
+        <div class="card-progress-bar" id="temperature-bar"
+            style="width: 0%; background: linear-gradient(90deg, var(--warning) 0%, var(--primary) 100%);">
+        </div>
+    </div>
+</div>
+
+            </div>
+
+            
+
+            
+        </div>
+       <!-- WATER PUMPING HISTORY SECTION -->
+<!-- NEW MULTI-CYCLE HISTORY SECTION -->
+<div class="history-section" style="
+    background: rgba(255,255,255,0.9);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 30px;
+    margin-top: 40px;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow);
+">
+    <h2 style="font-size:22px; color:var(--secondary); margin-bottom:20px;">
+        ⏳ Pumping Cycle History (Last 5 Cycles)
+    </h2>
+
+    <div id="cycle-list" style="font-size:16px; color:var(--text-primary); line-height:1.8;">
+        No cycles recorded yet.
+    </div>
+</div>
+
+
+        <!-- PERFORMANCE CHART -->
+       
+
+        <!-- ALERTS -->
+        
+        
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Suryadut - Real-Time Monitoring Dashboard. All rights reserved.</p>
+        <p style="margin-top: 15px; font-size: 14px; color: var(--text-secondary);">Data updates every 30 seconds •
+            For emergencies, contact +1-800-SURYADUT</p>
+    </footer>
+
+<script>
+const WEATHER_API_KEY = "41ac2c6ea9df4ac387d41320250912";
+const WEATHER_URL = `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=Kolkata&aqi=no`;
+
+const API_BASE = "http://10.98.112.93:3000";
+
+// SYSTEM CONSTANTS
+const MAX_SOLAR_KW = 25;
+const MOTOR_KW = 18;
+const WATER_LPS = 11.57;
+
+// LIVE VALUES
+let totalSolar = 0;
+let cycleSolar = 0;
+let powerToday = 0;
+let totalWaterLitres = 0;
+
+let motorRunning = false;
+let cycleHistory = [];
+let lastSolarUpdate = Date.now();
+
+/* ---------------- BACKEND MOTOR CONTROL ---------------- */
+
+async function sendMotorCommand(on) {
+    try {
+        await fetch(`${API_BASE}/api/motor/${on ? "on" : "off"}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        });
+        console.log("Motor command sent:", on ? "ON" : "OFF");
+    } catch (e) {
+        console.log("Motor command failed:", e);
+    }
+}
+
+/* -------------- FRONTEND MOTOR BUTTON LOGIC -------------- */
+function toggleMotor() {
+    motorRunning = !motorRunning;
+    const btn = document.getElementById("motor-btn");
+
+    if (motorRunning) {
+    btn.innerText = "⛔ Stop Motor";   // Motor is ON → show STOP
+    sendMotorCommand(true);
+
+        totalWaterLitres = 0;
+        powerToday = 0;
+        cycleSolar = 0;
+
+        startWaterPumping();
+    } else {
+            btn.innerText = "▶ Start Motor";  // Motor is OFF → show START
+    sendMotorCommand(false);
+
+        saveCycle();
+    }
+}
+
+/* ------------- WATER PUMP COUNT (per-cycle) ------------- */
+function startWaterPumping() {
+    const waterCard = document.getElementById("water-value");
+
+    const interval = setInterval(() => {
+        if (!motorRunning) {
+            clearInterval(interval);
+            return;
+        }
+
+        // Generator output (from solar)
+        let genW = window.genPower || 0;
+
+        // Pump ratings
+        const ratedFlowLPS = 5 / 60;   // 5 LPM → 0.0833 L/s
+        const ratedPumpPower = 30;     // pump approx 30W
+
+        // FLOW = ratedFlow * (availablePower / ratedPower)
+        let actualFlow = ratedFlowLPS * (genW / ratedPumpPower);
+
+        if (actualFlow < 0) actualFlow = 0;
+        if (actualFlow > ratedFlowLPS) actualFlow = ratedFlowLPS;
+
+        totalWaterLitres += actualFlow;
+
+        waterCard.innerText = Math.floor(totalWaterLitres).toLocaleString() + " L";
+    }, 1000);
+}
+
+
+
+/* ----------------- WEATHER + SOLAR UPDATE ----------------- */
+async function updateWeatherMetrics() {
+    try {
+        const res = await fetch(WEATHER_URL);
+        const weather = await res.json();
+
+        const temp = weather.current.temp_c;
+        const uv = weather.current.uv ?? 0;
+
+        // Store UV globally
+        window.lastUV = uv;
+
+        // Time difference calculation
+        let now = Date.now();
+        let hoursPassed = (now - lastSolarUpdate) / 3600000;
+        lastSolarUpdate = now;
+
+        // REAL SOLAR MODEL (5W panel)
+        let solarRatedW = 5;                  // max panel watt
+        let solarW = solarRatedW * (uv / 10); // scale by UV index (0–10)
+        if (solarW > 5) solarW = 5;
+        if (solarW < 0) solarW = 0;
+
+        // GENERATOR OUTPUT (775 motor, ~60% efficiency)
+        let genW = solarW * 0.60;
+
+        // Add to total solar generation (Wh → kWh)
+        let kWhTick = (solarW / 1000) * hoursPassed;
+        totalSolar += kWhTick;
+
+        // UI updates
+        document.getElementById("solar-value").innerText = totalSolar.toFixed(4);  // kWh
+        document.getElementById("temperature-value").innerText = temp + "°C";
+
+        // Show generator power as W
+        document.getElementById("power-value").innerText = genW.toFixed(2) + " W";
+
+        // Save generator power for pump usage
+        window.genPower = genW;
+
+    } catch (e) {
+        console.log("Weather API error:", e);
+    }
+}
+
+
+
+/* --------------------- GET SENSOR DATA --------------------- */
+async function fetchSensorData() {
+    try {
+        const res = await fetch(`${API_BASE}/api/sensors`);
+        const data = await res.json();
+
+        // TDS
+        document.getElementById("tds-value").innerText = data.tds + " ppm";
+        document.getElementById("tds-bar").style.width =
+            Math.min((data.tds / 1000) * 100, 100) + "%";
+
+        // Distance
+        if (data.distance_cm > 0) {
+            document.getElementById("distance-value").innerText = data.distance_cm + " cm";
+            document.getElementById("distance-bar").style.width =
+                Math.min((data.distance_cm / 500) * 100, 100) + "%";
+        }
+        // ✅ AUTO MOTOR SHUTDOWN WHEN WATER LEVEL IS HIGH
+        const WATER_FULL_THRESHOLD = 15; // cm — adjust based on your tank height
+
+        if (motorRunning && data.distance_cm > 0 && data.distance_cm < WATER_FULL_THRESHOLD) {
+         console.log("Tank full detected! Auto-shutting motor...");
+
+          motorRunning = false;
+          document.getElementById("motor-btn").innerText = "▶ Stop Motor";
+
+           sendMotorCommand(false); // Turn relay OFF
+            saveCycle(); // Save cycle data
+}
+
+
+        // Motor sync
+        // Only update button text, never overwrite motorRunning state
+          document.getElementById("motor-btn").innerText =
+           motorRunning ? "⛔ Stop Motor" : "▶ Start Motor";
+
+
+    } catch (e) {
+        console.log("Sensor API error:", e);
+    }
+}
+
+/* ---------------------- SAVE CYCLE DATA ---------------------- */
+function saveCycle() {
+    const cycle = {
+        water: totalWaterLitres,
+        solar: cycleSolar,
+        power: powerToday,
+        timestamp: new Date().toLocaleString()
+    };
+
+    cycleHistory.unshift(cycle);
+    if (cycleHistory.length > 5) cycleHistory.length = 5;
+
+    renderHistory();
+}
+
+/* ---------------- HISTORY UI RENDER ---------------- */
+function renderHistory() {
+    const div = document.getElementById("cycle-list");
+
+    if (!cycleHistory.length) {
+        div.innerHTML = "No cycles recorded yet.";
+        return;
+    }
+
+    div.innerHTML = cycleHistory
+        .map(
+            (c, i) => `
+        <div style="margin-bottom:15px;">
+            <strong>Cycle ${i + 1}</strong> — ${c.timestamp}<br>
+            🌊 Water: <strong>${Math.floor(c.water).toLocaleString()} L</strong><br>
+            ☀️ Solar Used: <strong>${c.solar.toFixed(2)} kWh</strong><br>
+            ⚡ Power: <strong>${c.power.toFixed(2)} kWh</strong>
+        </div>
+        <hr style="opacity:0.15;">
+    `
+        )
+        .join("");
+}
+
+/* ------------------- LOOP TIMERS ------------------- */
+setInterval(updateWeatherMetrics, 2000);
+setInterval(fetchSensorData, 1500);
+
+updateWeatherMetrics();
+fetchSensorData();
+renderHistory();
+
+/* Subtitle */
+setInterval(() => {
+    document.querySelector(".page-subtitle").textContent =
+        "Real-time dashboard | Last synced: " + new Date().toLocaleTimeString();
+}, 1000);
+</script>
+
+</body>
+
+</html>
+<script>
+const WEATHER_API_KEY = "41ac2c6ea9df4ac387d41320250912";
+const WEATHER_URL = `https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=Kolkata&aqi=no`;
+
+const API_BASE = "http://10.98.112.93:3000";
+
+// SYSTEM CONSTANTS
+const MAX_SOLAR_KW = 25;
+const MOTOR_KW = 18;
+const WATER_LPS = 11.57;
+
+// LIVE VALUES
+let totalSolar = 0;
+let cycleSolar = 0;
+let powerToday = 0;
+let totalWaterLitres = 0;
+
+let motorRunning = false;
+let cycleHistory = [];
+let lastSolarUpdate = Date.now();
+
+/* ---------------- BACKEND MOTOR CONTROL ---------------- */
+
+async function sendMotorCommand(on) {
+    try {
+        await fetch(`${API_BASE}/api/motor/${on ? "on" : "off"}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        });
+        console.log("Motor command sent:", on ? "ON" : "OFF");
+    } catch (e) {
+        console.log("Motor command failed:", e);
+    }
+}
+
+/* -------------- FRONTEND MOTOR BUTTON LOGIC -------------- */
+function toggleMotor() {
+    motorRunning = !motorRunning;
+    const btn = document.getElementById("motor-btn");
+
+    if (motorRunning) {
+    btn.innerText = "⛔ Stop Motor";   // Motor is ON → show STOP
+    sendMotorCommand(true);
+
+        totalWaterLitres = 0;
+        powerToday = 0;
+        cycleSolar = 0;
+
+        startWaterPumping();
+    } else {
+            btn.innerText = "▶ Start Motor";  // Motor is OFF → show START
+    sendMotorCommand(false);
+
+        saveCycle();
+    }
+}
+
+/* ------------- WATER PUMP COUNT (per-cycle) ------------- */
+function startWaterPumping() {
+    const waterCard = document.getElementById("water-value");
+
+    const interval = setInterval(() => {
+        if (!motorRunning) {
+            clearInterval(interval);
+            return;
+        }
+
+        // Generator output (from solar)
+        let genW = window.genPower || 0;
+
+        // Pump ratings
+        const ratedFlowLPS = 5 / 60;   // 5 LPM → 0.0833 L/s
+        const ratedPumpPower = 30;     // pump approx 30W
+
+        // FLOW = ratedFlow * (availablePower / ratedPower)
+        let actualFlow = ratedFlowLPS * (genW / ratedPumpPower);
+
+        if (actualFlow < 0) actualFlow = 0;
+        if (actualFlow > ratedFlowLPS) actualFlow = ratedFlowLPS;
+
+        totalWaterLitres += actualFlow;
+
+        waterCard.innerText = Math.floor(totalWaterLitres).toLocaleString() + " L";
+    }, 1000);
+}
+
+
+
+/* ----------------- WEATHER + SOLAR UPDATE ----------------- */
+async function updateWeatherMetrics() {
+    try {
+        const res = await fetch(WEATHER_URL);
+        const weather = await res.json();
+
+        const temp = weather.current.temp_c;
+        const uv = weather.current.uv ?? 0;
+
+        // Store UV globally
+        window.lastUV = uv;
+
+        // Time difference calculation
+        let now = Date.now();
+        let hoursPassed = (now - lastSolarUpdate) / 3600000;
+        lastSolarUpdate = now;
+
+        // REAL SOLAR MODEL (5W panel)
+        let solarRatedW = 5;                  // max panel watt
+        let solarW = solarRatedW * (uv / 10); // scale by UV index (0–10)
+        if (solarW > 5) solarW = 5;
+        if (solarW < 0) solarW = 0;
+
+        // GENERATOR OUTPUT (775 motor, ~60% efficiency)
+        let genW = solarW * 0.60;
+
+        // Add to total solar generation (Wh → kWh)
+        let kWhTick = (solarW / 1000) * hoursPassed;
+        totalSolar += kWhTick;
+
+        // UI updates
+        document.getElementById("solar-value").innerText = totalSolar.toFixed(4);  // kWh
+        document.getElementById("temperature-value").innerText = temp + "°C";
+
+        // Show generator power as W
+        document.getElementById("power-value").innerText = genW.toFixed(2) + " W";
+
+        // Save generator power for pump usage
+        window.genPower = genW;
+
+    } catch (e) {
+        console.log("Weather API error:", e);
+    }
+}
+
+
+
+/* --------------------- GET SENSOR DATA --------------------- */
+async function fetchSensorData() {
+    try {
+        const res = await fetch(`${API_BASE}/api/sensors`);
+        const data = await res.json();
+
+        // TDS
+        document.getElementById("tds-value").innerText = data.tds + " ppm";
+        document.getElementById("tds-bar").style.width =
+            Math.min((data.tds / 1000) * 100, 100) + "%";
+
+        // Distance
+        if (data.distance_cm > 0) {
+            document.getElementById("distance-value").innerText = data.distance_cm + " cm";
+            document.getElementById("distance-bar").style.width =
+                Math.min((data.distance_cm / 500) * 100, 100) + "%";
+        }
+        // ✅ AUTO MOTOR SHUTDOWN WHEN WATER LEVEL IS HIGH
+        const WATER_FULL_THRESHOLD = 15; // cm — adjust based on your tank height
+
+        if (motorRunning && data.distance_cm > 0 && data.distance_cm < WATER_FULL_THRESHOLD) {
+         console.log("Tank full detected! Auto-shutting motor...");
+
+          motorRunning = false;
+          document.getElementById("motor-btn").innerText = "▶ Stop Motor";
+
+           sendMotorCommand(false); // Turn relay OFF
+            saveCycle(); // Save cycle data
+}
+
+
+        // Motor sync
+        // Only update button text, never overwrite motorRunning state
+          document.getElementById("motor-btn").innerText =
+           motorRunning ? "⛔ Stop Motor" : "▶ Start Motor";
+
+
+    } catch (e) {
+        console.log("Sensor API error:", e);
+    }
+}
+
+/* ---------------------- SAVE CYCLE DATA ---------------------- */
+function saveCycle() {
+    const cycle = {
+        water: totalWaterLitres,
+        solar: cycleSolar,
+        power: powerToday,
+        timestamp: new Date().toLocaleString()
+    };
+
+    cycleHistory.unshift(cycle);
+    if (cycleHistory.length > 5) cycleHistory.length = 5;
+
+    renderHistory();
+}
+
+/* ---------------- HISTORY UI RENDER ---------------- */
+function renderHistory() {
+    const div = document.getElementById("cycle-list");
+
+    if (!cycleHistory.length) {
+        div.innerHTML = "No cycles recorded yet.";
+        return;
+    }
+
+    div.innerHTML = cycleHistory
+        .map(
+            (c, i) => `
+        <div style="margin-bottom:15px;">
+            <strong>Cycle ${i + 1}</strong> — ${c.timestamp}<br>
+            🌊 Water: <strong>${Math.floor(c.water).toLocaleString()} L</strong><br>
+            ☀️ Solar Used: <strong>${c.solar.toFixed(2)} kWh</strong><br>
+            ⚡ Power: <strong>${c.power.toFixed(2)} kWh</strong>
+        </div>
+        <hr style="opacity:0.15;">
+    `
+        )
+        .join("");
+}
+
+/* ------------------- LOOP TIMERS ------------------- */
+setInterval(updateWeatherMetrics, 2000);
+setInterval(fetchSensorData, 1500);
+
+updateWeatherMetrics();
+fetchSensorData();
+renderHistory();
+
+/* Subtitle */
+setInterval(() => {
+    document.querySelector(".page-subtitle").textContent =
+        "Real-time dashboard | Last synced: " + new Date().toLocaleTimeString();
+}, 1000);
+</script>
+
+const FORECAST_URL =
+  `https://api.weatherapi.com/v1/forecast.json?key=${WEATHER_API_KEY}&q=Kolkata&days=3&aqi=no&alerts=no`;

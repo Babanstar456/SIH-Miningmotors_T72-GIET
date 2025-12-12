@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suryadut - Solar-Powered Dewatering Solutions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #FF8C00;
+            --primary-dark: #E67E00;
+            --secondary: #00D4FF;
+            --accent: #00FF88;
+            --success: #00D4FF;
+            --danger: #FF4444;
+            --dark: #0A0E27;
+            --dark-light: #1A1F3A;
+            --light: #F0F4FF;
+            --text-primary: #0A0E27;
+            --text-secondary: #4A5578;
+            --border: #E8ECFF;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            background: var(--light);
+        }
+
+        /* LOADING SCREEN */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeOut 0.5s ease-in-out 2.5s forwards;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .sun-animation {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .sun {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, #FFB347 100%);
+            border-radius: 50%;
+            animation: rotate 4s linear infinite;
+            box-shadow: 0 0 30px rgba(255, 140, 0, 0.5);
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+        }
+
+        .dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        /* HEADER/NAVBAR */
+        header {
+            background: white;
+            padding: 20px 40px;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+            align-items: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .login-btn {
+            background: transparent;
+            color: var(--primary);
+            padding: 10px 20px;
+            border: 2px solid var(--primary);
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .login-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .cta-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 140, 0, 0.3);
+        }
+
+        /* HERO SECTION */
+        .hero {
+            padding: 80px 40px;
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.1) 0%, rgba(0, 212, 255, 0.1) 100%);
+            text-align: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .hero-content h1 {
+            font-size: 56px;
+            font-weight: 900;
+            margin-bottom: 20px;
+            color: var(--dark);
+            line-height: 1.2;
+        }
+
+        .hero-content h1 span {
+            color: var(--primary);
+        }
+
+        .hero-content p {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255, 140, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            padding: 16px 40px;
+            border: 2px solid var(--primary);
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-5px);
+        }
+
+        /* STATS SECTION */
+        .stats-section {
+            padding: 60px 40px;
+            background: white;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            text-align: center;
+        }
+
+        .stat-card {
+            padding: 40px 30px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%);
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-number {
+            font-size: 48px;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* PROBLEMS SECTION */
+        .problems-section {
+            padding: 80px 40px;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+            color: white;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 44px;
+            font-weight: 900;
+            margin-bottom: 60px;
+            text-align: center;
+        }
+
+        .section-title span {
+            color: var(--primary);
+        }
+
+        .problems-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .problem-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            padding: 40px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .problem-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 10px 40px rgba(255, 140, 0, 0.2);
+            transform: translateY(-10px);
+        }
+
+        .problem-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .problem-card h3 {
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+
+        .problem-card p {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.8;
+        }
+
+        /* SOLUTIONS SECTION */
+        .solutions-section {
+            padding: 80px 40px;
+            background: white;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .solutions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .solution-card {
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.05) 0%, rgba(0, 212, 255, 0.05) 100%);
+            border: 2px solid var(--border);
+            padding: 40px 30px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .solution-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-10px);
+        }
+
+        .solution-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .solution-card h3 {
+            font-size: 22px;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .solution-card p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        /* CARDS SECTION - FEATURES */
+        .cards-section {
+            padding: 80px 40px;
+            background: linear-gradient(135deg, rgba(255, 140, 0, 0.05) 0%, rgba(0, 212, 255, 0.05) 100%);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-15px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            height: 150px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 64px;
+        }
+
+        .card-body {
+            padding: 40px 30px;
+        }
+
+        .card-body h3 {
+            font-size: 26px;
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+
+        .card-body p {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+
+        .card-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 14px 32px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+
+        .card-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255, 140, 0, 0.3);
+        }
+
+        /* BENEFITS SECTION */
+        .benefits-section {
+            padding: 80px 40px;
+            background: white;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .benefits-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .benefit-item {
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 255, 136, 0.1) 100%);
+            border-radius: 15px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s;
+        }
+
+        .benefit-item:hover {
+            transform: translateX(10px);
+            box-shadow: var(--shadow);
+        }
+
+        .benefit-number {
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .benefit-item h4 {
+            font-size: 18px;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .benefit-item p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* FOOTER */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            border-top: 2px solid var(--primary);
+        }
+
+        /* CHARTS SECTION */
+        .charts-section {
+            padding: 80px 40px;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+            color: white;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 140, 0, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--secondary);
+        }
+
+        .chart-bar {
+            margin-bottom: 20px;
+        }
+
+        .chart-label {
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chart-bar-bg {
+            width: 100%;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            transition: width 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .login-btn,
+            .cta-btn {
+                width: 100%;
+            }
+
+            .hero-content h1 {
+                font-size: 36px;
+            }
+
+            .hero-content p {
+                font-size: 16px;
+            }
+
+            .section-title {
+                font-size: 32px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+            }
+
+            .btn-primary,
+            .btn-secondary {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- LOADING SCREEN -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="sun-animation">
+                <div class="sun"></div>
+            </div>
+            <div class="loading-text">SURYADUT</div>
+            <div class="dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER/NAVBAR -->
+    <header>
+        <div class="navbar">
+            <div class="logo">
+                <div class="logo-icon">☀️</div>
+                <span>SURYADUT</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#problems">Problems</a></li>
+                    <li><a href="#solutions">Solutions</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#charts">Analytics</a></li>
+                    <!-- Added login button and nav buttons container -->
+                    <li>
+                        <div class="nav-buttons">
+                            <button class="login-btn" id="loginBtn">Login</button>
+                            <button class="cta-btn"
+                                onclick="document.getElementById('contact').scrollIntoView({behavior: 'smooth'})">Get
+                                Started</button>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1>Solar-Powered Dewatering <span>Reimagined</span></h1>
+            <p>Cost-effective, sustainable mining operations using cutting-edge solar technology. Welcome to the future
+                of dewatering.</p>
+            <div class="hero-buttons">
+                <button class="btn-primary"
+                    onclick="document.getElementById('features').scrollIntoView({behavior: 'smooth'})">Explore
+                    Now</button>
+                <button class="btn-secondary"
+                    onclick="document.getElementById('charts').scrollIntoView({behavior: 'smooth'})">View
+                    Analytics</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS SECTION -->
+    <section class="stats-section">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">60%</div>
+                <div class="stat-label">Cost Reduction</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Solar Powered</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Monitoring</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">50%</div>
+                <div class="stat-label">Water Saved</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PROBLEMS SECTION -->
+    <section class="problems-section" id="problems">
+        <h2 class="section-title">Mining <span>Challenges</span></h2>
+        <div class="problems-grid">
+            <div class="problem-card">
+                <div class="problem-icon">💰</div>
+                <h3>High Operating Costs</h3>
+                <p>Traditional diesel-powered dewatering systems consume massive amounts of fuel, draining budget and
+                    resources.</p>
+            </div>
+            <div class="problem-card">
+                <div class="problem-icon">🌍</div>
+                <h3>Environmental Impact</h3>
+                <p>Conventional systems produce harmful emissions, contributing to climate change and air pollution.</p>
+            </div>
+            <div class="problem-card">
+                <div class="problem-icon">⚡</div>
+                <h3>Energy Dependency</h3>
+                <p>Reliance on grid power or fuel creates operational risks and vulnerability to price fluctuations.</p>
+            </div>
+            <div class="problem-card">
+                <div class="problem-icon">🔧</div>
+                <h3>Maintenance Headaches</h3>
+                <p>Complex systems require constant monitoring and expensive maintenance, reducing uptime.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SOLUTIONS SECTION -->
+    <section class="solutions-section" id="solutions">
+        <h2 class="section-title">How <span>Suryadut</span> Solves It</h2>
+        <div class="solutions-grid">
+            <div class="solution-card">
+                <div class="solution-icon">☀️</div>
+                <h3>100% Solar Energy</h3>
+                <p>Harness unlimited solar power to run dewatering operations completely off-grid and sustainably.</p>
+            </div>
+            <div class="solution-card">
+                <div class="solution-icon">📉</div>
+                <h3>60% Cost Savings</h3>
+                <p>Eliminate fuel costs and reduce operational expenses significantly with renewable energy.</p>
+            </div>
+            <div class="solution-card">
+                <div class="solution-icon">🌱</div>
+                <h3>Zero Emissions</h3>
+                <p>Go green with absolutely zero carbon footprint and environmental impact.</p>
+            </div>
+            <div class="solution-card">
+                <div class="solution-icon">📊</div>
+                <h3>Smart Monitoring</h3>
+                <p>Real-time dashboard for complete system visibility and predictive maintenance alerts.</p>
+            </div>
+            <div class="solution-card">
+                <div class="solution-icon">🔄</div>
+                <h3>Scalable Design</h3>
+                <p>Easy to expand from small operations to large-scale mining facilities.</p>
+            </div>
+            <div class="solution-card">
+                <div class="solution-icon">🚀</div>
+                <h3>Quick Deployment</h3>
+                <p>Rapid installation with minimal downtime and immediate operational benefits.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CHARTS SECTION -->
+    <section class="charts-section" id="charts">
+        <h2 class="section-title">Performance <span>Metrics</span></h2>
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-title">💵 Cost Comparison (Annual)</div>
+                <div class="chart-bar">
+                    <div class="chart-label">
+                        <span>Traditional System</span>
+                        <span>$500K</span>
+                    </div>
+                    <div class="chart-bar-bg">
+                        <div class="chart-bar-fill" style="width: 100%;">100%</div>
+                    </div>
+                </div>
+                <div class="chart-bar">
+                    <div class="chart-label">
+                        <span>Suryadut Solution</span>
+                        <span>$200K</span>
+                    </div>
+                    <div class="chart-bar-bg">
+                        <div class="chart-bar-fill"
+                            style="width: 40%; background: linear-gradient(90deg, #00FF88 0%, #00D4FF 100%);">40%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">⚡ Energy Efficiency</div>
+                <div class="chart-bar">
+                    <div class="chart-label">
+                        <span>Solar Generation</span>
+                        <span>950 kWh/day</span>
+                    </div>
+                    <div class="chart-bar-bg">
+                        <div class="chart-bar-fill" style="width: 95%;">95%</div>
+                    </div>
+                </div>
+                <div class="chart-bar">
+                    <div class="chart-label">
+                        <span>System Consumption</span>
+                        <span>850 kWh/day</span>
+                    </div>
+                    <div class="chart-bar-bg">
+                        <div class="chart-bar-fill"
+                            style="width: 85%; background: linear-gradient(90deg, #00D4FF 0%, #FF8C00 100%);">85%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">🌍 Environmental Impact</div>
+                <div class="chart-bar">
+                    <div class="chart-label">
+                        <span>CO₂ Reduction</span>
+                        <span>250 tons/year</span>
+                    </div>
+                    <div class="chart-bar-bg">
+                        <div class="chart-bar-fill" style="width: 90%;">90%</div>
+                    </div>
+                </div>
+                <div class="chart-bar">
+                    <div class="chart-label">
+                        <span>Water Savings</span>
+                        <span>50% Reduction</span>
+                    </div>
+                    <div class="chart-bar-bg">
+                        <div class="chart-bar-fill"
+                            style="width: 50%; background: linear-gradient(90deg, #FF8C00 0%, #00FF88 100%);">50%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES/CARDS SECTION -->
+    <section class="cards-section" id="features">
+        <h2 class="section-title">Key <span>Features</span></h2>
+        <div class="cards-grid">
+            <!-- Removed bidding page reference, now redirects to login -->
+            <div class="feature-card" onclick="window.location.href='login.html'">
+                <div class="card-header">💰</div>
+                <div class="card-body">
+                    <h3>Bidding Area</h3>
+                    <p>Submit your mining site specifications and receive competitive bids for customized Suryadut
+                        solutions tailored to your needs.</p>
+                    <button class="card-btn">Get Started</button>
+                </div>
+            </div>
+
+            <!-- Removed live monitoring page reference, now redirects to login -->
+            <div class="feature-card" onclick="window.location.href='login.html'">
+                <div class="card-header">📈</div>
+                <div class="card-body">
+                    <h3>Live Monitoring</h3>
+                    <p>Access real-time system analytics, performance metrics, and instant alerts for complete
+                        operational visibility 24/7.</p>
+                    <button class="card-btn">View Dashboard</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BENEFITS SECTION -->
+    <section class="benefits-section">
+        <div class="benefits-title">
+            <h2 class="section-title">Why Choose <span>Suryadut?</span></h2>
+        </div>
+        <div class="benefits-grid">
+            <div class="benefit-item">
+                <div class="benefit-number">1️⃣</div>
+                <h4>Industry Leading ROI</h4>
+                <p>Pay back your investment in under 3 years with massive operational savings.</p>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-number">2️⃣</div>
+                <h4>Proven Technology</h4>
+                <p>Trusted by mining operations globally with 99.9% uptime reliability.</p>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-number">3️⃣</div>
+                <h4>Expert Support</h4>
+                <p>24/7 technical support and maintenance from our dedicated team.</p>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-number">4️⃣</div>
+                <h4>Scalable Infrastructure</h4>
+                <p>Grows with your business from small to massive mining operations.</p>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-number">5️⃣</div>
+                <h4>Future Ready</h4>
+                <p>Aligned with global sustainability goals and environmental regulations.</p>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-number">6️⃣</div>
+                <h4>Maximum Efficiency</h4>
+                <p>Intelligent systems that optimize performance and minimize waste.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CONTACT/CTA SECTION -->
+    <section class="problems-section" id="contact" style="text-align: center; padding: 100px 40px;">
+        <h2 class="section-title">Ready to <span>Transform</span> Your Mining Operations?</h2>
+        <p style="font-size: 18px; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">Join
+            leading mining companies worldwide that have already switched to Suryadut. Cut costs, reduce emissions, and
+            boost efficiency today.</p>
+        <div class="hero-buttons">
+            <!-- Updated to redirect to login instead of bidding -->
+            <button class="btn-primary" onclick="window.location.href='login.html'">Get Started</button>
+            <!-- Updated to redirect to login instead of live monitoring -->
+            <button class="btn-secondary" onclick="window.location.href='login.html'">View Dashboard</button>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>&copy; 2025 Suryadut - Solar-Powered Dewatering Solutions. All rights reserved.</p>
+        <p style="margin-top: 15px; font-size: 14px; color: rgba(255, 255, 255, 0.7);">Empowering sustainable mining
+            with renewable energy</p>
+    </footer>
+
+    <script>
+        // Hide loading screen after 2.5 seconds
+        setTimeout(() => {
+            document.getElementById('loadingScreen').style.display = 'none';
+        }, 2500);
+
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            window.location.href = 'login.html';
+        });
+
+        // Smooth scroll behavior
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Animate chart bars on scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'none';
+                    setTimeout(() => {
+                        entry.target.style.animation = '';
+                    }, 10);
+                }
+            });
+        });
+
+        document.querySelectorAll('.chart-bar-fill').forEach(bar => {
+            observer.observe(bar);
+        });
+    </script>
+</body>
+
+</html>
